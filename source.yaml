@@ -1,0 +1,135 @@
+function_header:
+  regex: "func <func>\\((.*)\\):<i1>4<i2>$"
+  tokens: [func_name,args,statements]
+function:
+  regex: "<func>\\((.*)\\)"
+  tokens: [func_name,argument]
+  argument:
+    replace: [["^(.+?)$"," \\1"]]
+const_var:
+  regex: const <var>\s*=\s*(?!\s)(.+)$
+  tokens: [var_name,value]
+equality:
+  regex: <varof>==<varof>
+  tokens: [value1,value2]
+equality_not:
+  regex: <varof>!=<varof>
+  tokens: [value1,value2]
+gl:
+  regex: <varof>([<>]=*)([^:]+)(:*)
+  tokens: [value1,operator,value2,end]
+loop:
+  regex: loop\(((?:(?:\n\t+?.*)+\n*)+)\)
+  tokens: [statements]
+inc:
+  regex: <var>\+=<var>
+  tokens: [var,num]
+dec:
+  regex: <var>-=<var>
+  tokens: [var,num]
+assignment:
+  regex: <var>\s*=\s*(?!\s)(?!~)(.+)$
+  tokens: [var_name,value]
+arithematic:
+  regex: \(<varof> (<op>) <varof>\)
+  tokens: [num1,operator,num2]
+_1arithematic:
+  regex: (<opn>) (<op>) <varof>
+_2arithematic:
+  regex: <varof> (<op>) (<opn>)
+_3arithematic:
+  regex: (<opn>) (<op>) (<opn>)
+_4arithematic:
+  regex: \((<opn>) (<op>) <varof>\)
+_5arithematic:
+  regex: \(<varof> (<op>) (<opn>)\)
+_6arithematic:
+  regex: \((<opn>) (<op>) (<opn>)\)
+arithematic1:
+  regex: \(\((.+)\)\)
+  tokens: [inside]
+_7arithematic:
+  regex: <varof> (<op>) <varof>
+andor:
+  regex: <varof> (and|or) <varof>
+  tokens: [value1,operator,value2]
+not:
+  regex: not <varof>
+  tokens: [value1]
+cond_else:
+  regex: cond (.+):<i1>3<i2>\nelse:<i1>5<i2>
+  tokens: [bool,statements,tab,estatements]
+cond:
+  regex: cond (.+):<i1>3<i2>
+  tokens: [bool,statements]
+if_else:
+  regex: if (.+):<i1>3<i2>\n\t*else:<i1>5<i2>
+  tokens: [bool,statements,tab,estatements]
+if:
+  regex: if (.+):<i1>3<i2>
+  tokens: [bool,statements]
+when:
+  regex: when (.+):<i1>3<i2>
+  tokens: [bool,statements]
+case:
+  regex: chance (.+):<i1>3<i2>$
+  tokens: [value,statements]
+  statements:
+    replace: [["\n\t"],["\t\n"]]
+switch:
+  regex: switch (.+):<i1>3<i2>$
+  tokens: [exp,statements]
+  statements:
+    replace: [["\t"],["\n\n","\n"]]
+for_loop:
+  regex: for <var> in (.+):<i1>4<i2>$
+  tokens: [var_name,list,statements]
+  statements:
+    replace: [["^\n\t"]]
+for_range:
+  #(\\d+|\\(.+\\))\\.\\.(\\d+|\\(.+\\))
+  regex: "for <var> <var>\\.\\.<var>:<i1>5<i2>$"
+  tokens: [var_name,start,end,statements,tab]
+  #statements:
+    #replace: [["^\n\t"]]
+do:
+  regex: upto (.+) rtn (.+):(.*)<i1>5<i2>$
+  tokens: [bool,return,exp,statements]
+  statements:
+    replace: [["^\n\t"],["\n$"]]
+dotimes:
+  regex: "(\\d+) times for <var>:<i1>4<i2>$"
+  tokens: [value,var_name,statements]
+  statements:
+    replace: [["\n\t$","\n"]]
+do_list:
+  regex: do <var> in (.+):<i1>4<i2>$
+  tokens: [var_name,list,statements]
+restval:
+  regex: "\\*(<var>)\\)"
+  tokens: [val]
+opval:
+  regex: "&op (.+)\\)"
+  tokens: [val]
+lambda:
+  regex: "lambda (.+):(.+)(?:$|\\))"
+  tokens: [args,statement]
+arg:
+  regex: "\\((?:\n*.+,\n*)+(?:.|\n)+\\)"
+  tokens: [args]
+  args:
+    replace: [[","," "]]
+mod:
+  regex: <var>%<var>
+  tokens: [val1,val2]
+settings:
+  loop: True
+  looplimit: 5
+  variables:
+    opn: \(<op> .+ .+\)
+    var: ([A-Za-z0-9_]+)
+    varof: ([A-Za-z0-9_%+\-]+)
+    i1: "(\n(\t+?).*(?:(?:\n\\"
+    i2: .*)*\n*)*)
+    func: "([A-Ba-z_\\-]+)"
+    op: "[+-/*]"
