@@ -17,4 +17,4 @@ Then you can use generated source code(Like target.lisp).
 
 ### Languages
 
-[Common Lisp]("https://github.com/B-R-P/LangTrans")
+[Common Lisp](https://github.com/B-R-P/LangTrans)
