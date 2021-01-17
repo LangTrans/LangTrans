@@ -1,4 +1,4 @@
-# LangTrans
+# <LangTrans>
 To customize any programming language
 
 LangTrans  help you to customize syntax of any programming language.
