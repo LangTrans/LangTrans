@@ -22,3 +22,6 @@ Then you can use generated source code(Like target.lisp).
 ### Downloads
 [Standalone](https://drive.google.com/uc?export=download&id=14lanbflcifeIM3PSCL3fF3rFxSBPrt7W)<br>
 [Installer](https://drive.google.com/uc?export=download&id=15soZJZCDrDP5KGVxvD5L9Sg7109XVc7y)
+
+#### Documentation
+See the [documentation](https://b-r-p.github.io/LangTrans/)
