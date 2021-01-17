@@ -2,7 +2,7 @@ from sys import argv,exit
 from LangTrans import main
 if len(argv)==1 or (len(argv)==2 and argv[1]=="-h"):
 	print("Arg usage: <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
-	print("SoureFileName: *.C* SyntaxRepr,PatternRepr: without extension(.yaml) ")
+	print("SyntaxRepr,PatternRepr: without extension(.yaml) ")
 	exit()
 elif len(argv)<5:
 	print("Error: Insufficient number of arguments")
