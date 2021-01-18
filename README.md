@@ -24,4 +24,4 @@ Then you can use generated source code(Like target.lisp).
 [Installer](https://drive.google.com/uc?export=download&id=15soZJZCDrDP5KGVxvD5L9Sg7109XVc7y)
 
 #### Documentation
-See the [documentation](https://b-r-p.github.io/LangTrans/)
+See the [documentation](https://langtrans.readthedocs.io/en/latest/)
