@@ -23,5 +23,5 @@ Then you can use generated source code(Like target.lisp).
 [Standalone](https://drive.google.com/uc?export=download&id=14lanbflcifeIM3PSCL3fF3rFxSBPrt7W)<br>
 [Installer](https://drive.google.com/uc?export=download&id=15soZJZCDrDP5KGVxvD5L9Sg7109XVc7y)
 
-#### Documentation
+### Documentation
 See the [Documentation](https://langtrans.readthedocs.io/en/latest/)
