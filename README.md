@@ -15,6 +15,9 @@ Run trans.py (It will convert your customized language to orginal language)
 
 Then you can use generated source code(Like target.lisp).
 
+### Documentation
+See the [Documentation](https://langtrans.readthedocs.io/en/latest/)
+
 ### Languages
 
 [Common Lisp](https://github.com/B-R-P/LISP_Trans)
@@ -22,6 +25,3 @@ Then you can use generated source code(Like target.lisp).
 ### Downloads
 [Standalone](https://drive.google.com/uc?export=download&id=14lanbflcifeIM3PSCL3fF3rFxSBPrt7W)<br>
 [Installer](https://drive.google.com/uc?export=download&id=15soZJZCDrDP5KGVxvD5L9Sg7109XVc7y)
-
-### Documentation
-See the [Documentation](https://langtrans.readthedocs.io/en/latest/)
