@@ -26,7 +26,7 @@ First you should write code with new syntax.<br>(Like source.clisp)
 
 Second you should write regular expression to extract tokens from customized language, in a yaml file<br>(Like source.yaml)
 
-Third to replace customized syntax with original syntax. With help of token extracted, write orginal syntax.(Like target.yaml)
+Third to replace customized syntax with original syntax. With help of token extracted, write orginal syntax.<br>(Like target.yaml)
 
 Run trans.py<br>(It will convert your customized language to original language)
 
