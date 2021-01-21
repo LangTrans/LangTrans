@@ -13,7 +13,7 @@ printhis("Customized!")
 
 ##### Original Syntax 
 
-```commonlisp
+```lisp
 (defun printhis (s)
 	(format t s)
 )
