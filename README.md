@@ -1,6 +1,6 @@
 # ![LangTrans](https://drive.google.com/uc?export=download&id=1IXL9Gx_uz4c4gMm52IXsNgDKJ0WgC0jb)
 To customize any programming language
-
+<a href="https://discord.com/channels/802179593293267006"><img alt="Discord" src="https://img.shields.io/discord/802179593293267006"></a>
 <a href="https://langtrans.readthedocs.io/en/latest/"><img alt="Docs" src="https://img.shields.io/readthedocs/langtrans?style=plastic"></a>
 <a href="https://raw.githubusercontent.com/B-R-P/LangTrans/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/B-R-P/langtrans?style=plastic"></a>
 
