@@ -35,7 +35,8 @@ Third to replace customized syntax with original syntax with help of token extra
 ```bash
 py langtrans.py source.clisp target.lisp source target
                 #<customized> <orginal> <syntax> <template>
-```<br>(It will convert your customized language to original language)
+```
+(It will convert your customized language to original language)
 
 Then you can use generated source code.<br>(Like target.lisp).
 
