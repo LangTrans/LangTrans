@@ -1,0 +1,41 @@
+function: "(<func_name><argument>)\n"
+arithematic: (<operator> <num1> <num2>)
+arithematic1: (<inside>)
+assignment: (setq <var_name> <value>)
+const_var: (defconstant <var_name> <value>)
+equality: (= <value1> <value2>)
+equality_not: (/= <value1> <value2>)
+gl: (<operator> <value1> <value2>)<end>
+andor: (<operator> <value1> <value2>)
+not: (not <value1>)
+cond: (cond (<bool><statements>))
+cond_else: "(cond (<bool><statements>)\n(<estatements>)\n)"
+if: "(if <bool>(<statements>))\n"
+if_else: (if <bool><statements><estatements>)
+when: (when <bool><statements>)
+case: "\n\t(<value> <statements>)"
+switch: "(case <exp>\n<statements>)"
+loop: (loop<statements>)
+for_loop: |
+    (loop for <var_name> in <list> do
+      <statements>)
+for_range: |
+    (loop for <var_name> from <start> to <end> do
+      <tab><statements><tab>)
+do: |
+    (do (<statements>)
+        (<bool><return>)
+        <exp>)
+dotimes: (dotimes (<var_name> <value>)<statements>)
+do_list: (dolist (<var_name> '<list>)<statements>)
+function_header: (defun <func_name> (<args>)<statements>)
+return: (return-from <rval>)
+restval: "&rest <val>\\)"
+opval: "&optional <val>\\)"
+lambda: |
+    (lambda (<args>)
+      <statement>)
+arg: <args>
+inc: (incf <var> <num>)
+dec: (decf <var> <num>)
+mod: (mod <val1> <val2>)
