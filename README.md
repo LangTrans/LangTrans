@@ -32,7 +32,7 @@ Second you should write regular expression to extract tokens from customized lan
 
 Third to replace customized syntax with original syntax with help of token extracted, write the template of orginal syntax.<br>(Like example/target.yaml)
 
-```bash
+```console
 py langtrans.py source.clisp target.lisp source target
                 #<customized> <orginal> <syntax> <template>
 ```
