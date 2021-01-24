@@ -26,13 +26,16 @@ printhis("Customized!")
 
 ### Customize with LangTrans
 
-First you should write code with new syntax.<br>(Like source.clisp)
+First you should write code with new syntax.<br>(Like example/source.clisp)
 
-Second you should write regular expression to extract tokens from customized language, in a yaml file<br>(Like source.yaml)
+Second you should write regular expression to extract tokens from customized language, in a yaml file<br>(Like example/source.yaml)
 
-Third to replace customized syntax with original syntax with help of token extracted, write the template of orginal syntax.<br>(Like target.yaml)
+Third to replace customized syntax with original syntax with help of token extracted, write the template of orginal syntax.<br>(Like example/target.yaml)
 
-Run trans.py<br>(It will convert your customized language to original language)
+```bash
+py langtrans.py source.clisp target.lisp source target
+                #<customized> <orginal> <syntax> <template>
+```<br>(It will convert your customized language to original language)
 
 Then you can use generated source code.<br>(Like target.lisp).
 
