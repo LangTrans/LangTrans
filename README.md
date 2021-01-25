@@ -47,6 +47,8 @@ For more see the [Documentation](https://langtrans.readthedocs.io/en/latest/).
 
 [Common Lisp](https://github.com/B-R-P/LISP_Trans)
 
+[Lua](https://github.com/B-R-P/Lua_Trans)
+
 Other languages coming soon...
 
 ### Downloads
