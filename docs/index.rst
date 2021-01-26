@@ -13,7 +13,7 @@ How it works?
 LangTrans convert your syntax into orginal syntax.
 Regular Expression is used to extract tokens from your language.
 It should be written in a yaml file.
-You should write pattern of syntax of orginal language in another yaml file.
+You should write template of syntax of orginal language in another yaml file.
 LangTrans take both yaml files as input and convert code written in new syntax to orginal syntax.
 
 .. toctree::
