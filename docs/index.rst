@@ -33,7 +33,7 @@ Methods
 	<dd class="field-odd"><p><strong>spattern</strong> (<em>dic</em>) – Dictionary with yaml file details</p>
 	</dd>
 	<dt class="field-even">Returns</dt>
-	<dd class="field-even"><p>option(repalce,eachline),regex,token_names</p>
+	<dd class="field-even"><p>option(replace,eachline),regex,token_names</p>
 	</dd>
 	<dt class="field-odd">Return type</dt>
 	<dd class="field-odd"><p>dic,dic,list</p>
