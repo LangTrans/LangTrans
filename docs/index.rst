@@ -28,6 +28,66 @@ Methods
    :undoc-members:
    :show-inheritance:
 
+.. raw:: html
+
+	<span class="target" id="module-LangTrans"></span><dl class="py function">
+	<dt id="LangTrans.extract">
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">extract</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spattern</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.extract" title="Permalink to this definition">¶</a></dt>
+	<dd><p>This function extract contents needed from yaml file with regex</p>
+	<dl class="field-list simple">
+	<dt class="field-odd">Parameters</dt>
+	<dd class="field-odd"><p><strong>spattern</strong> (<em>dic</em>) – Dictionary with yaml file details</p>
+	</dd>
+	<dt class="field-even">Returns</dt>
+	<dd class="field-even"><p>option(replace,eachline),regex,token_names</p>
+	</dd>
+	<dt class="field-odd">Return type</dt>
+	<dd class="field-odd"><p>dic,dic,list</p>
+	</dd>
+	</dl>
+	</dd></dl>
+	<dl class="py function">
+	<dt id="LangTrans.main">
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">exlocation</span></em>, <em class="sig-param"><span class="n">plocation</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.main" title="Permalink to this definition">¶</a></dt>
+	<dd><p>This is main function convert new syntax to orginal syntax</p>
+	<dl class="field-list simple">
+	<dt class="field-odd">Parameters</dt>
+	<dd class="field-odd"><ul class="simple">
+	<li><p><strong>content</strong> (<em>str</em>) – Code with new syntax</p></li>
+	<li><p><strong>exlocation</strong> (<em>str</em>) – Yaml file location containing regular expression for new syntax</p></li>
+	<li><p><strong>plocation</strong> (<em>str</em>) – Yaml file location containing pattern of orginal syntax</p></li>
+	</ul>
+	</dd>
+	<dt class="field-even">Returns</dt>
+	<dd class="field-even"><p>Return code with orginal syntax</p>
+	</dd>
+	<dt class="field-odd">Return type</dt>
+	<dd class="field-odd"><p>str</p>
+	</dd>
+	</dl>
+	</dd></dl>
+	<dl class="py function">
+	<dt id="LangTrans.matching">
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">matching</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">patterns</span></em>, <em class="sig-param"><span class="n">cats</span></em>, <em class="sig-param"><span class="n">content</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.matching" title="Permalink to this definition">¶</a></dt>
+	<dd><p>This function matches tokens from code with regular expressions</p>
+	<dl class="field-list simple">
+	<dt class="field-odd">Parameters</dt>
+	<dd class="field-odd"><ul class="simple">
+	<li><p><strong>patterns</strong> (<em>dict</em>) – Dictionary regular expression with its token name</p></li>
+	<li><p><strong>cats</strong> (<em>list</em>) – Token names</p></li>
+	<li><p><strong>content</strong> (<em>str</em>) – Tokens are matched from this</p></li>
+	</ul>
+	</dd>
+	<dt class="field-even">Returns</dt>
+	<dd class="field-even"><p>Matched tokens only and Full match of regular expression</p>
+	</dd>
+	<dt class="field-odd">Return type</dt>
+	<dd class="field-odd"><p>dic,dic</p>
+	</dd>
+	</dl>
+	</dd></dl>
+	</div>
+
 Implementation
 ==============
 | To customize you should extract tokens with regular expression.
