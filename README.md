@@ -1,4 +1,4 @@
-# ![LangTrans](https://drive.google.com/uc?export=download&id=1IXL9Gx_uz4c4gMm52IXsNgDKJ0WgC0jb)
+# ![LangTrans](https://see.fontimg.com/api/renderfont4/qZx11/eyJyIjoiZnMiLCJoIjo5MywidyI6MTAwMCwiZnMiOjkzLCJmZ2MiOiIjMDAwMDAwIiwiYmdjIjoiI0ZGRkZGRiIsInQiOjF9/PExhbmdUcmFucz4/deargod.png)
 To customize any programming language
 
 <a href="https://discord.gg/3nDwppur5S"><img alt="Discord" src="https://img.shields.io/discord/802179593293267006?style=plastic"></a>
