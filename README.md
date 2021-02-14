@@ -1,4 +1,4 @@
-# ![LangTrans](https://see.fontimg.com/api/renderfont4/qZx11/eyJyIjoiZnMiLCJoIjo5MywidyI6MTAwMCwiZnMiOjkzLCJmZ2MiOiIjMDAwMDAwIiwiYmdjIjoiI0ZGRkZGRiIsInQiOjF9/PExhbmdUcmFucz4/deargod.png)
+# ![LangTrans](https://see.fontimg.com/api/renderfont4/1GZyj/eyJyIjoiZnMiLCJoIjo5MywidyI6MTAwMCwiZnMiOjkzLCJmZ2MiOiIjMDAwMDAwIiwiYmdjIjoiI0ZGRkZGRiIsInQiOjF9/PExhbmdUcmFucz4/rogueland-slab-bold.png)
 To customize any programming language
 
 <a href="https://discord.gg/3nDwppur5S"><img alt="Discord" src="https://img.shields.io/discord/802179593293267006?style=plastic"></a>
