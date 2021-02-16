@@ -45,10 +45,10 @@ For more see the [Documentation](https://langtrans.readthedocs.io/en/latest/).
 
 ### Languages
 
-[Common Lisp](https://github.com/B-R-P/LISP_Trans)
-[Lua](https://github.com/B-R-P/Lua_Trans)
+* [Common Lisp](https://github.com/B-R-P/LISP_Trans)
+* [Lua](https://github.com/B-R-P/Lua_Trans)
+* [Languages submitted by others](https://docs.google.com/spreadsheets/d/e/2PACX-1vRCSAg_p2YrTd9Rr7s9HrLq0rAX1ewjN_ODAj42yg3Zmu4M5EDOp8j1wZjY8zboFpcctu2wpyyzmLhL/pubhtml)
 
-[Languages submitted by others](https://docs.google.com/spreadsheets/d/e/2PACX-1vRCSAg_p2YrTd9Rr7s9HrLq0rAX1ewjN_ODAj42yg3Zmu4M5EDOp8j1wZjY8zboFpcctu2wpyyzmLhL/pubhtml)<br>
 [Share your language here](https://forms.gle/YDEKapaTZmJspyDeA)
 ### Downloads
 [Standalone](https://drive.google.com/uc?export=download&id=14lanbflcifeIM3PSCL3fF3rFxSBPrt7W)<br>
