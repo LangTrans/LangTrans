@@ -49,8 +49,9 @@ For more see the [Documentation](https://langtrans.readthedocs.io/en/latest/).
 
 [Lua](https://github.com/B-R-P/Lua_Trans)
 
-Other languages coming soon...
-
+Other languages coming soon...<br>
+[Languages submitted](https://docs.google.com/spreadsheets/d/e/2PACX-1vRCSAg_p2YrTd9Rr7s9HrLq0rAX1ewjN_ODAj42yg3Zmu4M5EDOp8j1wZjY8zboFpcctu2wpyyzmLhL/pubhtml)<br>
+[Share your language](https://forms.gle/YDEKapaTZmJspyDeA)
 ### Downloads
 [Standalone](https://drive.google.com/uc?export=download&id=14lanbflcifeIM3PSCL3fF3rFxSBPrt7W)<br>
 [Installer](https://drive.google.com/uc?export=download&id=15soZJZCDrDP5KGVxvD5L9Sg7109XVc7y)
