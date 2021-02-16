@@ -47,7 +47,7 @@ For more see the [Documentation](https://langtrans.readthedocs.io/en/latest/).
 
 * [Common Lisp](https://github.com/B-R-P/LISP_Trans)
 * [Lua](https://github.com/B-R-P/Lua_Trans)
-* [Languages by community](https://docs.google.com/spreadsheets/d/e/2PACX-1vRCSAg_p2YrTd9Rr7s9HrLq0rAX1ewjN_ODAj42yg3Zmu4M5EDOp8j1wZjY8zboFpcctu2wpyyzmLhL/pubhtml)
+* [Languages by community](https://langtrans.github.io/langtransrepos/)
 
 [Share your language here](https://forms.gle/YDEKapaTZmJspyDeA)
 ### Downloads
