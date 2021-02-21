@@ -8,6 +8,27 @@ To customize syntax of any programming language.
 """
 
 
+def tknoptions(sdef):
+    oneachline = dict()
+    replase = dict()
+    for tkname in sdef["tokens"]:
+        if tkname in sdef:
+            if "eachline" in sdef[tkname]:
+                oneachline.update({tkname: sdef[tkname]["eachline"]})
+            if "replace" in sdef[tkname]:
+                replase.update(
+                    {
+                        tkname: [
+                            (comp(repregex[0]), repregex[1])
+                            if 1 < len(repregex)
+                            else (comp(repregex[0]), "")
+                            for repregex in sdef[tkname]["replace"]
+                        ]
+                    }
+                )
+    return [oneachline, replase]
+
+
 def extract(spattern):
     """
     This function extract contents needed from yaml file with regex
@@ -24,24 +45,7 @@ def extract(spattern):
         if part[0] == "_":
             sdef["tokens"] = spattern[part[2:]]["tokens"]
         regexs.update({part: comp(sdef["regex"], MULTILINE)})
-        oneachline = dict()
-        replase = dict()
-        for tkname in sdef["tokens"]:
-            if tkname in sdef:
-                if "eachline" in sdef[tkname]:
-                    oneachline.update({tkname: sdef[tkname]["eachline"]})
-                if "replace" in sdef[tkname]:
-                    replase.update(
-                        {
-                            tkname: [
-                                (comp(repregex[0]), repregex[1])
-                                if 1 < len(repregex)
-                                else (comp(repregex[0]), "")
-                                for repregex in sdef[tkname]["replace"]
-                            ]
-                        }
-                    )
-        options.update({part: [oneachline, replase]})
+        options.update({part: tknoptions(sdef)})
         tknames.append(sdef["tokens"])
     return options, regexs, tknames
 
@@ -62,7 +66,9 @@ def matching(patterns, tknames, content):
     tknmatches = dict()
     partmatches = dict()
     for (part, pattern), tknames in zip(patterns.items(), tknames):
+        # Part matching
         partmatches[part] = [i.group() for i in pattern.finditer(content)]
+        # Token matching
         if len(tknames) == 1:
             tknmatches[part] = [
                 {tkname: matches}
@@ -76,21 +82,7 @@ def matching(patterns, tknames, content):
     return tknmatches, partmatches
 
 
-def main(content, slocation, tlocation):
-    """
-    This is main function convert new syntax to orginal syntax
-
-    :param content: Code with new syntax
-    :param slocation: Yaml file location containing regular expression for new syntax
-    :param tlocation: Yaml file location containing pattern of original syntax
-    :type content: str
-    :type slocation: str
-    :type tlocation: str
-    :return: Return code with original syntax
-    :rtype: str
-    """
-    spattern = load(open(slocation).read(), Loader=SafeLoader)  # Source
-    tpattern = load(open(tlocation).read(), Loader=SafeLoader)  # Target
+def settings(spattern):  # Extract settings from yaml
     loop = False
     loplimit = 7
     if "settings" in spattern:
@@ -108,12 +100,45 @@ def main(content, slocation, tlocation):
                             rv = rv.replace("<" + varname + ">", rgx)
                     spattern[part]["regex"] = rv
         del spattern["settings"]
+    return loop, loplimit
+
+
+def run_tknoptions(matches):
+    if tkname in oneachline:  # For oneachline option
+        line = oneachline[tkname]
+        match = "\n".join(
+            [line.replace("<line>", l) for l in match.split("\n") if l.strip() != ""]
+        )
+    if tkname in replacer:  # For replace option
+        for rgx in replacer[tkname]:
+            match = sub(*rgx, match)
+    return match
+
+
+def main(content, slocation, tlocation):
+    """
+    This is main function convert new syntax to orginal syntax
+
+    :param content: Code with new syntax
+    :param slocation: Yaml file location containing regular expression for new syntax
+    :param tlocation: Yaml file location containing pattern of original syntax
+    :type content: str
+    :type slocation: str
+    :type tlocation: str
+    :return: Return code with original syntax
+    :rtype: str
+    """
+    spattern = load(open(slocation).read(), Loader=SafeLoader)  # Source
+    tpattern = load(open(tlocation).read(), Loader=SafeLoader)  # Target
+    loop, loplimit = settings(spattern)
+
     options, regexs, tokens = extract(spattern)
-    del spattern
     lopcount = 0
     while 1:
         tknmatches, partmatches = matching(regexs, tokens, content)
-        if not any(len(i) != 0 for i in partmatches.values()):
+        if not any(
+            len(i) != 0 for i in partmatches.values()
+        ):  # End if there is no match
             break
         for part in tknmatches:  # retrieving settings for oneachline and replace
             oneachline, replacer = options[part]
@@ -123,18 +148,7 @@ def main(content, slocation, tlocation):
                 pattern = tpattern[part[2:]]
             for tknmatch, partmatch in zip(tknmatches[part], partmatches[part]):
                 for tkname, match in tknmatch.items():
-                    if tkname in oneachline:  # For oneachline option
-                        line = oneachline[tkname]
-                        match = "\n".join(
-                            [
-                                line.replace("<line>", l)
-                                for l in match.split("\n")
-                                if l.strip() != ""
-                            ]
-                        )
-                    if tkname in replacer:  # For replace option
-                        for rgx in replacer[tkname]:
-                            match = sub(*rgx, match)
+                    match = run_tknoptions(match)
                     # Replacing pattern tokens expression with tokens
                     temp_pattern = pattern.replace(f"<{tkname}>", match)
                 # Replacing whole block
