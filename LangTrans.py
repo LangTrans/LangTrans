@@ -90,7 +90,7 @@ def matching(patterns, tknames, content):
     return tknmatches, partmatches
 
 
-def settings(spattern):  # Extract settings from yaml
+def settings(spattern):
     """
     This function extract settings from yaml
 
@@ -119,7 +119,7 @@ def settings(spattern):  # Extract settings from yaml
     return loop, loplimit
 
 
-def run_tknoptions(match, oneachline, replacer):
+def run_tknoptions(match, tkname, oneachline, replacer):
     """
         Running eachline and replace options on content extracted
 
@@ -173,10 +173,11 @@ def main(content, slocation, tlocation):
             else:
                 pattern = tpattern[part[2:]]
             for tknmatch, partmatch in zip(tknmatches[part], partmatches[part]):
+                temp_pattern = pattern
                 for tkname, match in tknmatch.items():
-                    match = run_tknoptions(match, *options[part])
+                    match = run_tknoptions(match, tkname, *options[part])
                     # Replacing pattern tokens expression with tokens
-                    temp_pattern = pattern.replace(f"<{tkname}>", match)
+                    temp_pattern = temp_pattern.replace(f"<{tkname}>", match)
                 # Replacing whole block
                 content = content.replace(partmatch, temp_pattern)
         lopcount += 1
