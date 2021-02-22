@@ -9,6 +9,14 @@ To customize syntax of any programming language.
 
 
 def tknoptions(sdef):
+    """
+    This function extract eachline and replace option from yaml
+
+    :param sdef: Contains token options
+    :type spattern: dic
+    :return: [eachline_option,replace_option]
+    :rtype: list
+    """
     oneachline = dict()
     replase = dict()
     for tkname in sdef["tokens"]:
@@ -83,6 +91,14 @@ def matching(patterns, tknames, content):
 
 
 def settings(spattern):  # Extract settings from yaml
+    """
+    This function extract settings from yaml
+
+    :param spattern: Dictionary with yaml file details
+    :type spattern: dic
+    :return: lop,loplimit
+    :rtype: bool,int
+    """
     loop = False
     loplimit = 7
     if "settings" in spattern:
@@ -103,7 +119,19 @@ def settings(spattern):  # Extract settings from yaml
     return loop, loplimit
 
 
-def run_tknoptions(matches):
+def run_tknoptions(match, oneachline, replacer):
+    """
+        Running eachline and replace options on content extracted
+
+    :param match: content extracted
+    :type match: string
+    :param oneachline: Contain eachline template of all tokens
+    :type oneachline: dic
+    :param replace: Contain regex to extract and replace with for all token
+    :type replace: dic
+    :return: match
+    :rtype: string
+    """
     if tkname in oneachline:  # For oneachline option
         line = oneachline[tkname]
         match = "\n".join(
@@ -136,19 +164,17 @@ def main(content, slocation, tlocation):
     lopcount = 0
     while 1:
         tknmatches, partmatches = matching(regexs, tokens, content)
-        if not any(
-            len(i) != 0 for i in partmatches.values()
-        ):  # End if there is no match
+        # End if there is no match
+        if not any(len(i) != 0 for i in partmatches.values()):
             break
-        for part in tknmatches:  # retrieving settings for oneachline and replace
-            oneachline, replacer = options[part]
+        for part in tknmatches:
             if part[0] != "_":  # Find two regex extract with one pattern
                 pattern = tpattern[part]
             else:
                 pattern = tpattern[part[2:]]
             for tknmatch, partmatch in zip(tknmatches[part], partmatches[part]):
                 for tkname, match in tknmatch.items():
-                    match = run_tknoptions(match)
+                    match = run_tknoptions(match, *options[part])
                     # Replacing pattern tokens expression with tokens
                     temp_pattern = pattern.replace(f"<{tkname}>", match)
                 # Replacing whole block
