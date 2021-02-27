@@ -6,7 +6,8 @@ To customize any programming language
 <a href="https://raw.githubusercontent.com/B-R-P/LangTrans/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/B-R-P/langtrans?style=plastic"></a>
 
 LangTrans is a syntactic preprocessor<br>
-It help you to customize syntax of any programming language.<br>It convert customized syntax to original syntax.
+It helps you to customize the syntax of any programming language<br>
+It converts customized syntax to original syntax.
 
 ##### Customized Syntax of LISP
 
