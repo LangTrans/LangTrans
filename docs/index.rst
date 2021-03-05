@@ -30,62 +30,107 @@ Methods
 
 .. raw:: html
 
-	<span class="target" id="module-LangTrans"></span><dl class="py function">
+	<div class="section" id="module-LangTrans">
+	<span id="methods"></span><h1>Methods<a class="headerlink" href="#module-LangTrans" title="Permalink to this headline">¶</a></h1>
+	<dl class="py function">
+	<dt id="LangTrans.check_collections">
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">check_collections</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">calls</span></em>, <em class="sig-param"><span class="n">collections</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.check_collections" title="Permalink to this definition">¶</a></dt>
+	<dd><p>Add collections into call list</p>
+	<dl class="field-list simple">
+	<dt class="field-odd">Parameters</dt>
+	<dd class="field-odd"><ul class="simple">
+	<li><p><strong>calls</strong> (<em>list</em>) – List with collection names and part names</p></li>
+	<li><p><strong>collections</strong> (<em>dic</em>) – Dictionary of collections and its names</p></li>
+	</ul>
+	</dd>
+	<dt class="field-even">Returns</dt>
+	<dd class="field-even"><p>Collections added array</p>
+	</dd>
+	<dt class="field-odd">Return type</dt>
+	<dd class="field-odd"><p>list</p>
+	</dd>
+	</dl>
+	</dd></dl>
+
+	<dl class="py function">
 	<dt id="LangTrans.extract">
-	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">extract</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spattern</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.extract" title="Permalink to this definition">¶</a></dt>
-	<dd><p>This function extract contents needed from yaml file with regex</p>
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">extract</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spattern</span></em>, <em class="sig-param"><span class="n">collections</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.extract" title="Permalink to this definition">¶</a></dt>
+	<dd><p>Extract contents needed from yaml file with regex</p>
 	<dl class="field-list simple">
 	<dt class="field-odd">Parameters</dt>
 	<dd class="field-odd"><p><strong>spattern</strong> (<em>dic</em>) – Dictionary with yaml file details</p>
 	</dd>
 	<dt class="field-even">Returns</dt>
-	<dd class="field-even"><p>option(replace,eachline),regex,token_names</p>
+	<dd class="field-even"><p>option(replace,eachline),regex,token_names,global_chk</p>
 	</dd>
 	<dt class="field-odd">Return type</dt>
-	<dd class="field-odd"><p>dic,dic,list</p>
+	<dd class="field-odd"><p>dic,dic,list,dic</p>
 	</dd>
 	</dl>
 	</dd></dl>
+
 	<dl class="py function">
 	<dt id="LangTrans.main">
-	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">exlocation</span></em>, <em class="sig-param"><span class="n">plocation</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.main" title="Permalink to this definition">¶</a></dt>
-	<dd><p>This is main function convert new syntax to orginal syntax</p>
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">spattern_details</span></em>, <em class="sig-param"><span class="n">tpattern</span></em>, <em class="sig-param"><span class="n">donly_check</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">donly</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">loop</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">loplimit</span><span class="o">=</span><span class="default_value">7</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.main" title="Permalink to this definition">¶</a></dt>
+	<dd><p>Convert new syntax to orginal syntax</p>
 	<dl class="field-list simple">
 	<dt class="field-odd">Parameters</dt>
 	<dd class="field-odd"><ul class="simple">
 	<li><p><strong>content</strong> (<em>str</em>) – Code with new syntax</p></li>
-	<li><p><strong>exlocation</strong> (<em>str</em>) – Yaml file location containing regular expression for new syntax</p></li>
-	<li><p><strong>plocation</strong> (<em>str</em>) – Yaml file location containing pattern of orginal syntax</p></li>
+	<li><p><strong>spattern_details</strong> (<em>tuple</em>) – Options extracted</p></li>
+	<li><p><strong>tpattern</strong> (<em>dic</em>) – Dictionary containing pattern of original syntax</p></li>
+	<li><p><strong>donly_check</strong> (<em>bool</em>) – Recursion or not boolean</p></li>
+	<li><p><strong>donly</strong> (<em>list</em>) – Array of part name that are called during recursion</p></li>
+	<li><p><strong>loop</strong> (<em>bool</em>) – Loop option</p></li>
+	<li><p><strong>loplimit</strong> (<em>int</em>) – Number of loops</p></li>
 	</ul>
 	</dd>
 	<dt class="field-even">Returns</dt>
-	<dd class="field-even"><p>Return code with orginal syntax</p>
+	<dd class="field-even"><p>Return code with original syntax</p>
 	</dd>
 	<dt class="field-odd">Return type</dt>
 	<dd class="field-odd"><p>str</p>
 	</dd>
 	</dl>
 	</dd></dl>
+
 	<dl class="py function">
-	<dt id="LangTrans.matching">
-	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">matching</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">patterns</span></em>, <em class="sig-param"><span class="n">cats</span></em>, <em class="sig-param"><span class="n">content</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.matching" title="Permalink to this definition">¶</a></dt>
-	<dd><p>This function matches tokens from code with regular expressions</p>
+	<dt id="LangTrans.settings">
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">settings</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spattern</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.settings" title="Permalink to this definition">¶</a></dt>
+	<dd><p>Replace var name wit its value</p>
 	<dl class="field-list simple">
 	<dt class="field-odd">Parameters</dt>
-	<dd class="field-odd"><ul class="simple">
-	<li><p><strong>patterns</strong> (<em>dict</em>) – Dictionary regular expression with its token name</p></li>
-	<li><p><strong>cats</strong> (<em>list</em>) – Token names</p></li>
-	<li><p><strong>content</strong> (<em>str</em>) – Tokens are matched from this</p></li>
-	</ul>
+	<dd class="field-odd"><p><strong>spattern</strong> (<em>dic</em>) – Dictionary with yaml file details</p>
 	</dd>
 	<dt class="field-even">Returns</dt>
-	<dd class="field-even"><p>Matched tokens only and Full match of regular expression</p>
+	<dd class="field-even"><p>collections,lop,loplimit</p>
 	</dd>
 	<dt class="field-odd">Return type</dt>
-	<dd class="field-odd"><p>dic,dic</p>
+	<dd class="field-odd"><p>dic,bool,int</p>
 	</dd>
 	</dl>
 	</dd></dl>
+
+	<dl class="py function">
+	<dt id="LangTrans.tknoptions">
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">tknoptions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sdef</span></em>, <em class="sig-param"><span class="n">collections</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.tknoptions" title="Permalink to this definition">¶</a></dt>
+	<dd><p>Extract eachline and replace option from yaml</p>
+	<dl class="field-list simple">
+	<dt class="field-odd">Parameters</dt>
+	<dd class="field-odd"><ul class="simple">
+	<li><p><strong>sdef</strong> (<em>dic</em>) – Contains token options</p></li>
+	<li><p><strong>collections</strong> – Dictionary of collections and its names</p></li>
+	</ul>
+	</dd>
+	<dt class="field-even">Returns</dt>
+	<dd class="field-even"><p>(call,eachline_option,replace_option)</p>
+	</dd>
+	<dt class="field-odd">Return type</dt>
+	<dd class="field-odd"><p>tuple</p>
+	</dd>
+	</dl>
+	</dd></dl>
+
 	</div>
 
 Implementation
@@ -103,9 +148,11 @@ Syntax
 	typeofsynax:
 		regex: regex (regex for token1) <var1> regex
 		tokens: ["token1","token2","token3"]
+		global: True
 		token1:
 			eachline: extra_here <line> extra_here
 			replace: [[regex,"replacewith"],["regex here"]]
+			call: [other_typeofsyntax]
 	_1typeofsyntax:
 		regex: another regex
 		tokens: ["token1","token2","token3"]
@@ -116,6 +163,8 @@ Syntax
 	settings:
 		loop: #boolean value here(default: False)
 		looplimit: #integer here
+		collections:
+			collection_name: [typeofsyntax1,typeofsyntax2]
 		variables:
 			var1: #regex
 			var2: #regex
@@ -128,6 +177,7 @@ Syntax
 | **regex** - Place where regular expression to extract particular block of code including tokens.
 | 			Regular expression for tokens must be inside brackets.
 | **tokens** - Name of tokens you wanted to extract
+| **global** - if it is False it works only after calling it otherwise it works normally.
 | **token1** - You can modify tokens you extracted
 | 		 	*eachline* - You can additional content for eachline
 | 		 				<line> represents orginal content in eachline
@@ -136,11 +186,16 @@ Syntax
 | 		 				All should be in a list
 | 		 				To replace add a list with first as regular expression of content
 | 		 				and second with content you wanted to replace with
-| 		 				To delete add a list with one content(regular expression of content you wanted to remove) 
+| 		 				To delete add a list with one content(regular expression of content you wanted to remove)
+|			*call* - To call another regex from another part/typeofsyntax
+|				 Write name of part/typeofsyntax inside array of call.
+|				 It work only on token(token1) part extracted from source code.
 | **settings** - In setting you have loop, looplimit and variables
 | 		   		*loop* -  To pass through regular expresion multiple times
 | 		   		*looplimit* - Number of times to pass
 | 		  		*variables* - You can make variables than can used inside regular expression by <varname>
+|				*collections* - List of typeofsyntax/part with a name
+|						It can be called
 Example
 ^^^^^^^
 .. code-block:: yaml
