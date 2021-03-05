@@ -1,12 +1,20 @@
+comment:
+  regex: "#(.+?)$"
+  tokens: [comment]
+multiline:
+  regex: ~(.+?)$
+  tokens: [statement]
 function_header:
   regex: func <func>\((.*)\):<i1>4<i2>$
   tokens: [func_name,args,statements]
+  args:
+    call: [arg]
 function:
   regex: "<func>\\((.*)\\)"
   tokens: [func_name,argument]
   argument:
-    replace: 
-      - ["^(.+?)$"," \\1"]
+    replace: [["^(.+?)$"," \\1"]]
+    call: [arg]
 const_var:
   regex: const <var>\s*=\s*(?!\s)(.+)$
   tokens: [var_name,value]
@@ -76,22 +84,17 @@ case:
   regex: chance (.+):<i1>3<i2>$
   tokens: [value,statements]
   statements:
-    replace: 
-      - ["\n\t"]
-      - ["\t\n"]
+    replace: [["\n\t"],["\t\n"]]
 switch:
   regex: switch (.+):<i1>3<i2>$
   tokens: [exp,statements]
   statements:
-    replace: 
-      - ["\t"]
-      - ["\n\n","\n"]
+    replace: [["\t"],["\n\n","\n"]]
 for_loop:
   regex: for <var> in (.+):<i1>4<i2>$
   tokens: [var_name,list,statements]
   statements:
-    replace: 
-      - ["^\n\t"]
+    replace: [["^\n\t"]]
 for_range:
   #(\\d+|\\(.+\\))\\.\\.(\\d+|\\(.+\\))
   regex: "for <var> <var>\\.\\.<var>:<i1>5<i2>$"
@@ -102,15 +105,12 @@ do:
   regex: upto (.+) rtn (.+):(.*)<i1>5<i2>$
   tokens: [bool,return,exp,statements]
   statements:
-    replace: 
-      - ["^\n\t"]
-      - ["\n$"]
+    replace: [["^\n\t"],["\n$"]]
 dotimes:
   regex: "(\\d+) times for <var>:<i1>4<i2>$"
   tokens: [value,var_name,statements]
   statements:
-    replace: 
-      - ["\n\t$","\n"]
+    replace: [["\n\t$","\n"]]
 do_list:
   regex: do <var> in (.+):<i1>4<i2>$
   tokens: [var_name,list,statements]
@@ -124,17 +124,20 @@ lambda:
   regex: "lambda (.+):(.+)(?:$|\\))"
   tokens: [args,statement]
 arg:
-  regex: "\\((?:\n*.+,\n*)+(?:.|\n)+\\)"
+  regex: "(?:\n*.+,\n*)+(?:.|\n)+"
   tokens: [args]
+  global: False
   args:
-    replace: 
-      - [","," "]
+    replace: [[","," "]]
 mod:
   regex: <var>%<var>
   tokens: [val1,val2]
+list_element:
+  regex: "<var>\\[(\\d*)\\]"
+  tokens: [var,pos]
 settings:
   loop: True
-  looplimit: 5
+  looplimit: 7
   variables:
     opn: \(<op> .+ .+\)
     var: ([A-Za-z0-9_]+)
