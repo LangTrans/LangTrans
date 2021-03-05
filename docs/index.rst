@@ -20,8 +20,6 @@ LangTrans take both yaml files as input and convert code written in new syntax t
    :maxdepth: 3
    :caption: Contents:
    :numbered:
-Methods
-=======
 
 .. automodule:: LangTrans
    :members:
