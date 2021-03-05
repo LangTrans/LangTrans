@@ -31,7 +31,6 @@ Methods
 .. raw:: html
 
 	<div class="section" id="module-LangTrans">
-	<span id="methods"></span><h1>Methods<a class="headerlink" href="#module-LangTrans" title="Permalink to this headline">¶</a></h1>
 	<dl class="py function">
 	<dt id="LangTrans.check_collections">
 	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">check_collections</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">calls</span></em>, <em class="sig-param"><span class="n">collections</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.check_collections" title="Permalink to this definition">¶</a></dt>
@@ -122,7 +121,7 @@ Methods
 	<dt class="field-odd">Parameters</dt>
 	<dd class="field-odd"><ul class="simple">
 	<li><p><strong>sdef</strong> (<em>dic</em>) – Contains token options</p></li>
-	<li><p><strong>collections</strong> – Collections and its names</p></li>
+	<li><p><strong>collections</strong> (<em>dic</em>) – Collections and its names</p></li>
 	</ul>
 	</dd>
 	<dt class="field-even">Returns</dt>
