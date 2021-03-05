@@ -40,7 +40,7 @@ Methods
 	<dt class="field-odd">Parameters</dt>
 	<dd class="field-odd"><ul class="simple">
 	<li><p><strong>calls</strong> (<em>list</em>) – List with collection names and part names</p></li>
-	<li><p><strong>collections</strong> (<em>dic</em>) – Dictionary of collections and its names</p></li>
+	<li><p><strong>collections</strong> (<em>dic</em>) – Collections and its names</p></li>
 	</ul>
 	</dd>
 	<dt class="field-even">Returns</dt>
@@ -58,7 +58,10 @@ Methods
 	<dd><p>Extract contents needed from yaml file with regex</p>
 	<dl class="field-list simple">
 	<dt class="field-odd">Parameters</dt>
-	<dd class="field-odd"><p><strong>spattern</strong> (<em>dic</em>) – Dictionary with yaml file details</p>
+	<dd class="field-odd"><ul class="simple">
+	<li><p><strong>spattern</strong> (<em>dic</em>) – Dictionary with yaml file details</p></li>
+	<li><p><strong>collections</strong> – Collections and its names</p></li>
+	</ul>
 	</dd>
 	<dt class="field-even">Returns</dt>
 	<dd class="field-even"><p>option(replace,eachline),regex,token_names,global_chk</p>
@@ -119,7 +122,7 @@ Methods
 	<dt class="field-odd">Parameters</dt>
 	<dd class="field-odd"><ul class="simple">
 	<li><p><strong>sdef</strong> (<em>dic</em>) – Contains token options</p></li>
-	<li><p><strong>collections</strong> – Dictionary of collections and its names</p></li>
+	<li><p><strong>collections</strong> – Collections and its names</p></li>
 	</ul>
 	</dd>
 	<dt class="field-even">Returns</dt>
@@ -130,6 +133,8 @@ Methods
 	</dd>
 	</dl>
 	</dd></dl>
+
+	</div>
 
 	</div>
 
