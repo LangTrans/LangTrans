@@ -21,14 +21,16 @@ LangTrans take both yaml files as input and convert code written in new syntax t
    :caption: Contents:
    :numbered:
 
-.. automodule:: LangTrans
+Functions
+=========
+
+ .. automodule:: LangTrans
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. raw:: html
 
-	<div class="section" id="module-LangTrans">
 	<dl class="py function">
 	<dt id="LangTrans.check_collections">
 	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">check_collections</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">calls</span></em>, <em class="sig-param"><span class="n">collections</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.check_collections" title="Permalink to this definition">¶</a></dt>
@@ -133,7 +135,6 @@ LangTrans take both yaml files as input and convert code written in new syntax t
 
 	</div>
 
-	</div>
 
 Implementation
 ==============
