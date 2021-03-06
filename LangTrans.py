@@ -77,6 +77,7 @@ def extract(spattern):
     loplimit = 7
     if "settings" in spattern:
         setting = spattern["settings"]
+         del spattern["settings"]
         if "loop" in setting:
             loop = setting["loop"]
         if "looplimit" in setting:
@@ -89,22 +90,23 @@ def extract(spattern):
                         if "<" + varname + ">" in rv:  # regex without var
                             rv = rv.replace("<" + varname + ">", rgx)
                     spattern[part]["regex"] = rv
-        del spattern["settings"]
         if "collections" in setting:
             collections = setting["collections"]
+       
     #------------------------------------------------------------
     options = dict()
     regexs = dict()
-    global_chk = dict()
+    global_chk = []
     tknames = []
     for part, sdef in spattern.items():
         if part[0] == "_":
             sdef["tokens"] = spattern[part[2:]]["tokens"]
         regexs.update({part: comp(sdef["regex"], MULTILINE)})
         options.update({part: tknoptions(sdef, collections)})
-        tknames.append(sdef["tokens"])
-        global_chk.update({part: (sdef["global"] if "global" in sdef else True)})
-    return (options, regexs, tknames, global_chk, loop, loplimit)
+        tknames.append(tuple(sdef["tokens"]))
+        if "global" not in sdef or sdef["global"]:
+            global_chk.append(part)
+    return (options, regexs, tuple(tknames), tuple(global_chk), loop, loplimit)
 
 def main(yaml_details,content,donly_check=False,donly=[]):
     """
@@ -120,17 +122,17 @@ def main(yaml_details,content,donly_check=False,donly=[]):
     :rtype: str
     """
     (options, regexs, tokens, global_chk, loop, loplimit),tpattern = yaml_details
-    # matching tokens from code with regular expressions
-    # --------------------------------------------------------------
     lopcount = 0
     while 1:
+         # matching tokens from code with regular expressions
+        # --------------------------------------------------------------
         tknmatches = dict()
         partmatches = dict()
         for (part, pattern), tknames in zip(regexs.items(), tokens):
             if donly_check:  # For recursion
                 if part not in donly:
                     continue
-            elif not global_chk[part]:
+            elif part not in global_chk:
                 continue
             # Part matching
             partmatches[part] = [i.group() for i in pattern.finditer(content)]
@@ -177,9 +179,7 @@ def main(yaml_details,content,donly_check=False,donly=[]):
                     temp_pattern = temp_pattern.replace(f"<{tkname}>", match)
                 content = content.replace(partmatch, temp_pattern)
         lopcount += 1
-        if not loop:
-            break
-        elif lopcount == loplimit:
+        if not loop or lopcount == loplimit:
             break
     return content
 
