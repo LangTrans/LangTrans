@@ -142,29 +142,28 @@ def main(
 
     # matching tokens from code with regular expressions
     # --------------------------------------------------------------
-    tknmatches = dict()
-    partmatches = dict()
-    for (part, pattern), tknames in zip(regexs.items(), tokens):
-        if donly_check:  # For recursion
-            if part not in donly:
-                continue
-        elif not global_chk[part]:
-            continue
-        # Part matching
-        partmatches[part] = [i.group() for i in pattern.finditer(content)]
-        # Token matching
-        unitkn = len(tknames) == 1
-        tknmatches[part] = [
-            {tkname: matches}
-            if unitkn
-            else {tkname: match for match, tkname in zip(matches, tknames)}
-            for partmatched in partmatches[part]
-            for matches, tkname in zip(pattern.findall(partmatched), tknames)
-        ]
-    del regexs, tokens, global_chk, donly, donly_check
-    # ---------------------------------------------------------------
     lopcount = 0
     while 1:
+        tknmatches = dict()
+        partmatches = dict()
+        for (part, pattern), tknames in zip(regexs.items(), tokens):
+            if donly_check:  # For recursion
+                if part not in donly:
+                    continue
+            elif not global_chk[part]:
+                continue
+            # Part matching
+            partmatches[part] = [i.group() for i in pattern.finditer(content)]
+            # Token matching
+            unitkn = len(tknames) == 1
+            tknmatches[part] = [
+                {tkname: matches}
+                if unitkn
+                else {tkname: match for match, tkname in zip(matches, tknames)}
+                for partmatched in partmatches[part]
+                for matches, tkname in zip(pattern.findall(partmatched), tknames)
+            ]
+        # ---------------------------------------------------------------
         for part in tknmatches:  # Replacing parts in source code
             if part[0] != "_":  # Find two regex extract with one pattern
                 pattern = tpattern[part]
