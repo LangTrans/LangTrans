@@ -153,15 +153,13 @@ def main(
         # Part matching
         partmatches[part] = [i.group() for i in pattern.finditer(content)]
         # Token matching
-        if len(tknames) == 1:
-            tknmatches[part] = [
-                {tkname: matches}
-                for matches, tkname in zip(pattern.findall(content), tknames)
-            ]
-            continue
+        unitkn = len(tknames) == 1
         tknmatches[part] = [
-            {tkname: match for match, tkname in zip(matches, tknames)}
-            for matches in pattern.findall(content)
+            {tkname: matches}
+            if unitkn
+            else {tkname: match for match, tkname in zip(matches, tknames)}
+            for partmatched in partmatches[part]
+            for matches, tkname in zip(pattern.findall(partmatched), tknames)
         ]
     del regexs, tokens, global_chk, donly, donly_check
     # ---------------------------------------------------------------
@@ -230,7 +228,7 @@ if __name__ == "__main__":
             extract(spattern, collections),
             tpattern,
             loop=loop,
-            loplimit=loplimit
+            loplimit=loplimit,
         )
         open(argv[2], "w").write(targetcode)
         print(targetcode)
