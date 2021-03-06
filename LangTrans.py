@@ -1,6 +1,6 @@
 from yaml import load, SafeLoader
 from re import compile as comp, MULTILINE, sub
-
+from pickle import dump,load as cload
 """
 LangTrans
 ---------
@@ -62,7 +62,7 @@ def tknoptions(sdef, collections):
     return (call, oneachline, replase)
 
 
-def extract(spattern, collections):
+def extract(spattern):
     """
     This function extract contents needed from yaml file with regex
 
@@ -71,29 +71,7 @@ def extract(spattern, collections):
     :return: option(replace,eachline),regex,token_names
     :rtype: dic,dic,list
     """
-    options = dict()
-    regexs = dict()
-    global_chk = dict()
-    tknames = []
-    for part, sdef in spattern.items():
-        if part[0] == "_":
-            sdef["tokens"] = spattern[part[2:]]["tokens"]
-        regexs.update({part: comp(sdef["regex"], MULTILINE)})
-        options.update({part: tknoptions(sdef, collections)})
-        tknames.append(sdef["tokens"])
-        global_chk.update({part: (sdef["global"] if "global" in sdef else True)})
-    return (options, regexs, tknames, global_chk)
-
-
-def settings(spattern):
-    """
-    This function replace var name wit its value
-
-    :param spattern: Dictionary with yaml file details
-    :type spattern: dic
-    :return: lop,loplimit
-    :rtype: bool,int
-    """
+    #Settings---------------------------------------------------
     collections = dict()
     loop = False
     loplimit = 7
@@ -114,18 +92,21 @@ def settings(spattern):
         del spattern["settings"]
         if "collections" in setting:
             collections = setting["collections"]
-    return (collections, loop, loplimit)
+    #------------------------------------------------------------
+    options = dict()
+    regexs = dict()
+    global_chk = dict()
+    tknames = []
+    for part, sdef in spattern.items():
+        if part[0] == "_":
+            sdef["tokens"] = spattern[part[2:]]["tokens"]
+        regexs.update({part: comp(sdef["regex"], MULTILINE)})
+        options.update({part: tknoptions(sdef, collections)})
+        tknames.append(sdef["tokens"])
+        global_chk.update({part: (sdef["global"] if "global" in sdef else True)})
+    return (options, regexs, tknames, global_chk, loop, loplimit)
 
-
-def main(
-    content,
-    spattern_details,
-    tpattern,
-    donly_check=False,
-    donly=[],
-    loop=False,
-    loplimit=7,
-):
+def main(yaml_details,content,donly_check=False,donly=[]):
     """
     This is main function convert new syntax to orginal syntax
 
@@ -138,8 +119,7 @@ def main(
     :return: Return code with original syntax
     :rtype: str
     """
-    options, regexs, tokens, global_chk = spattern_details
-
+    (options, regexs, tokens, global_chk, loop, loplimit),tpattern = yaml_details
     # matching tokens from code with regular expressions
     # --------------------------------------------------------------
     lopcount = 0
@@ -176,13 +156,10 @@ def main(
                     # Token options
                     if tkname in calls:  # For part calls
                         match = main(
+                            yaml_details,
                             match,
-                            spattern_details,
-                            tpattern,
                             donly_check=True,
                             donly=calls[tkname],
-                            loop=loop,
-                            loplimit=loplimit,
                         )
                     if tkname in oneachline:  # For oneachline option
                         line = oneachline[tkname]
@@ -206,7 +183,10 @@ def main(
             break
     return content
 
-
+def grab(argv):
+    spattern = load(open(argv[3] + ".yaml").read(), Loader=SafeLoader)  # Source
+    tpattern = load(open(argv[4] + ".yaml").read(), Loader=SafeLoader)  # Target
+    return extract(spattern),tpattern
 if __name__ == "__main__":
     from sys import argv, exit
 
@@ -214,21 +194,22 @@ if __name__ == "__main__":
         print("Arg usage: <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
         print("SyntaxRepr,PatternRepr: without extension(.yaml) ")
         exit()
-    elif len(argv) < 5:
+    elif len(argv) < 3:
         print("Error: Insufficient number of arguments")
         exit()
     try:
-        spattern = load(open(argv[3] + ".yaml").read(), Loader=SafeLoader)  # Source
-        tpattern = load(open(argv[4] + ".yaml").read(), Loader=SafeLoader)  # Target
+        if "-f" not in argv:
+            yaml_details = grab(argv)
+        else:
+            argv.remove("-f")
+            try:
+                yaml_details = cload(open(argv[-1]+".ltz","rb"))
+            except Exception:
+                yaml_details = grab(argv)
+                dump(yaml_details, open(argv[-1]+".ltz","wb"))
+                print("File saved as",argv[-1]+".ltz")
         content = open(argv[1]).read()
-        collections, loop, loplimit = settings(spattern)  # Collections Added
-        targetcode = main(
-            content,
-            extract(spattern, collections),
-            tpattern,
-            loop=loop,
-            loplimit=loplimit,
-        )
+        targetcode = main(yaml_details,content)
         open(argv[2], "w").write(targetcode)
         print(targetcode)
     except Exception as err:
