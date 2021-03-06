@@ -128,7 +128,7 @@ Functions
 	<dd class="field-even"><p>(call,eachline_option,replace_option)</p>
 	</dd>
 	<dt class="field-odd">Return type</dt>
-	<dd class="field-odd"><p>tuple</p>
+	<dd class="field-odd"><p>(dic,dic,dic)</p>
 	</dd>
 	</dl>
 	</dd></dl>
@@ -155,7 +155,7 @@ Syntax
 		token1:
 			eachline: extra_here <line> extra_here
 			replace: [[regex,"replacewith"],["regex here"]]
-			call: [other_typeofsyntax]
+			call: [other_typeofsyntax,$collection_name]
 	_1typeofsyntax:
 		regex: another regex
 		tokens: ["token1","token2","token3"]
