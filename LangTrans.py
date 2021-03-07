@@ -1,6 +1,7 @@
 from yaml import load, SafeLoader
 from re import compile as comp, MULTILINE, sub
-from pickle import dump,load as cload
+from pickle import dump, load as cload, HIGHEST_PROTOCOL
+
 """
 LangTrans
 ---------
@@ -71,13 +72,13 @@ def extract(spattern):
     :return: option(replace,eachline),regex,token_names
     :rtype: dic,dic,list
     """
-    #Settings---------------------------------------------------
+    # Settings---------------------------------------------------
     collections = dict()
     loop = False
     loplimit = 7
     if "settings" in spattern:
         setting = spattern["settings"]
-         del spattern["settings"]
+        del spattern["settings"]
         if "loop" in setting:
             loop = setting["loop"]
         if "looplimit" in setting:
@@ -92,8 +93,7 @@ def extract(spattern):
                     spattern[part]["regex"] = rv
         if "collections" in setting:
             collections = setting["collections"]
-       
-    #------------------------------------------------------------
+    # ------------------------------------------------------------
     options = dict()
     regexs = dict()
     global_chk = []
@@ -108,7 +108,8 @@ def extract(spattern):
             global_chk.append(part)
     return (options, regexs, tuple(tknames), tuple(global_chk), loop, loplimit)
 
-def main(yaml_details,content,donly_check=False,donly=[]):
+
+def main(yaml_details, content, donly_check=False, donly=[]):
     """
     This is main function convert new syntax to orginal syntax
 
@@ -121,10 +122,10 @@ def main(yaml_details,content,donly_check=False,donly=[]):
     :return: Return code with original syntax
     :rtype: str
     """
-    (options, regexs, tokens, global_chk, loop, loplimit),tpattern = yaml_details
+    (options, regexs, tokens, global_chk, loop, loplimit), tpattern = yaml_details
     lopcount = 0
     while 1:
-         # matching tokens from code with regular expressions
+        # matching tokens from code with regular expressions
         # --------------------------------------------------------------
         tknmatches = dict()
         partmatches = dict()
@@ -183,10 +184,21 @@ def main(yaml_details,content,donly_check=False,donly=[]):
             break
     return content
 
-def grab(argv):
-    spattern = load(open(argv[3] + ".yaml").read(), Loader=SafeLoader)  # Source
-    tpattern = load(open(argv[4] + ".yaml").read(), Loader=SafeLoader)  # Target
-    return extract(spattern),tpattern
+
+def grab(argv, l):
+    spattern = load(open(argv[l] + ".yaml").read(), Loader=SafeLoader)  # Source
+    tpattern = load(open(argv[l + 1] + ".yaml").read(), Loader=SafeLoader)  # Target
+    return extract(spattern), tpattern
+
+
+def save(argv, l):
+    argv[-1] += ".ltz"
+    yaml_details = grab(argv, l)
+    dump(yaml_details, open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL)
+    print("File saved as", argv[-1])
+    return yaml_details
+
+
 if __name__ == "__main__":
     from sys import argv, exit
 
@@ -198,18 +210,19 @@ if __name__ == "__main__":
         print("Error: Insufficient number of arguments")
         exit()
     try:
-        if "-f" not in argv:
-            yaml_details = grab(argv)
-        else:
+        if "-c" in argv:  # Combine into ltz
+            save(argv, 2)
+            exit()
+        if "-f" in argv:  # Use ltz
             argv.remove("-f")
             try:
-                yaml_details = cload(open(argv[-1]+".ltz","rb"))
+                yaml_details = cload(open(argv[-1] + ".ltz", "rb"))
             except Exception:
-                yaml_details = grab(argv)
-                dump(yaml_details, open(argv[-1]+".ltz","wb"))
-                print("File saved as",argv[-1]+".ltz")
+                yaml_details = save(argv, 3)
+        else:
+            yaml_details = grab(argv, 3)
         content = open(argv[1]).read()
-        targetcode = main(yaml_details,content)
+        targetcode = main(yaml_details, content)
         open(argv[2], "w").write(targetcode)
         print(targetcode)
     except Exception as err:
