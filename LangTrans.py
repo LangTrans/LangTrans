@@ -87,7 +87,7 @@ def extract(spattern):
             for part, sdef in spattern.items():
                 if part != "settings":
                     rv = sdef["regex"]  # regex with var
-                    for varname, rgx in setting["variables"].items():
+                    for varname, rgx in reversed(setting["variables"].items()):
                         if "<" + varname + ">" in rv:  # regex without var
                             rv = rv.replace("<" + varname + ">", rgx)
                     spattern[part]["regex"] = rv
