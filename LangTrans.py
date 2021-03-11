@@ -138,13 +138,15 @@ def main(yaml_details, content, donly_check=False, donly=[]):
             # Part matching
             partmatches[part] = [i.group() for i in pattern.finditer(content)]
             # Token matching
-            unitkn = len(tknames) == 1
+            if len(tknames) == 1:
+                tknmatches[part] = [
+                    {tkname: matches}
+                    for matches, tkname in zip(pattern.findall(content), tknames)
+                ]
+                continue
             tknmatches[part] = [
-                {tkname: matches}
-                if unitkn
-                else {tkname: match for match, tkname in zip(matches, tknames)}
-                for partmatched in partmatches[part]
-                for matches, tkname in zip(pattern.findall(partmatched), tknames)
+                {tkname: match for match, tkname in zip(matches, tknames)}
+                for matches in pattern.findall(content)
             ]
         # ---------------------------------------------------------------
         for part in tknmatches:  # Replacing parts in source code
