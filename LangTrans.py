@@ -42,6 +42,14 @@ def tknoptions(sdef, collections):
     oneachline = dict()
     replase = dict()
     call = dict()
+    nsdef=dict()
+    for tkns,opts in sdef.items():#Spliting Token options
+        if "," in tkns:
+            for tkn in tkns.split(","):
+                nsdef[tkn]=opts
+        else:
+            nsdef[tkns]=opts
+    sdef=nsdef;del nsdef
     for tkname in sdef["tokens"]:
         if tkname in sdef:
             tknopt = sdef[tkname]  # Token options
@@ -158,14 +166,6 @@ def main(yaml_details, content, donly_check=False, donly=[]):
             for tknmatch, partmatch in zip(tknmatches[part], partmatches[part]):
                 temp_pattern = pattern
                 for tkname, match in tknmatch.items():
-                    # Token options
-                    if tkname in calls:  # For part calls
-                        match = main(
-                            yaml_details,
-                            match,
-                            donly_check=True,
-                            donly=calls[tkname],
-                        )
                     if tkname in oneachline:  # For oneachline option
                         line = oneachline[tkname]
                         match = "\n".join(
@@ -178,6 +178,14 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                     if tkname in replacer:  # For replace option
                         for rgx in replacer[tkname]:
                             match = sub(*rgx, match)
+                    # Token options
+                    if tkname in calls:  # For part calls
+                        match = main(
+                            yaml_details,
+                            match,
+                            donly_check=True,
+                            donly=calls[tkname],
+                        )
                     # Replacing pattern tokens expression with tokens
                     temp_pattern = temp_pattern.replace(f"<{tkname}>", match)
                 content = content.replace(partmatch, temp_pattern)
