@@ -149,12 +149,14 @@ def main(yaml_details, content, donly_check=False, donly=[]):
             if len(tknames) == 1:
                 tknmatches[part] = [
                     {tkname: matches}
-                    for matches, tkname in zip(pattern.findall(content), tknames)
+                    for matched in partmatches[part]
+                    for matches, tkname in zip(pattern.findall(matched), tknames)
                 ]
                 continue
             tknmatches[part] = [
                 {tkname: match for match, tkname in zip(matches, tknames)}
-                for matches in pattern.findall(content)
+                for matched in partmatches[part]
+                for matches in pattern.findall(matched)
             ]
         # ---------------------------------------------------------------
         for part in tknmatches:  # Replacing parts in source code
