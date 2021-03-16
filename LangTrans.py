@@ -54,7 +54,7 @@ def tknoptions(sdef, collections):
         if tkname in sdef:
             tknopt = sdef[tkname]  # Token options
             if "eachline" in tknopt:
-                oneachline.update({tkname: tkopt["eachline"]})
+                oneachline.update({tkname: tknopt["eachline"]})
             if "replace" in tknopt:
                 replase.update(
                     {
