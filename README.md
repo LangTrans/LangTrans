@@ -27,7 +27,7 @@ printhis("Customized!")
 (printhis "Customized!")
 ```
 
-### 📝Customize with LangTrans
+### Customize with LangTrans
 
 First you should write code with new syntax.<br>(Like example/source.clisp)
 
@@ -43,7 +43,7 @@ py langtrans.py source.clisp target.lisp source target
 
 Then you can use generated source code.<br>(Like target.lisp).
 
-### 📄Documentation
+### Documentation
 For more see the [Documentation](https://langtrans.readthedocs.io/en/latest/).
 
 ### Languages
