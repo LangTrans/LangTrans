@@ -39,37 +39,38 @@ def tknoptions(sdef, collections):
     :return: [eachline_option,replace_option]
     :rtype: list
     """
-    oneachline = dict()
-    replase = dict()
-    call = dict()
-    nsdef=dict()
-    for tkns,opts in sdef.items():#Spliting Token options
+    options = dict()
+    nsdef = dict()
+    for tkns, opts in sdef.items():  # Spliting Token options
         if "," in tkns:
             for tkn in tkns.split(","):
-                nsdef[tkn]=opts
+                nsdef[tkn] = opts
         else:
-            nsdef[tkns]=opts
-    sdef=nsdef;del nsdef
+            nsdef[tkns] = opts
+    sdef = nsdef
+    del nsdef
     for tkname in sdef["tokens"]:
         if tkname in sdef:
-            tknopt = sdef[tkname]  # Token options
-            if "eachline" in tknopt:
-                oneachline.update({tkname: tknopt["eachline"]})
-            if "replace" in tknopt:
-                replase.update(
-                    {
-                        tkname: [
-                            (comp(repregex[0]), repregex[1])
-                            if 1 < len(repregex)
-                            else (comp(repregex[0]), "")
-                            for repregex in tknopt["replace"]
-                        ]
-                    }
-                )
-            if "call" in tknopt:
-                call.update({tkname: check_collections(tknopt["call"], collections)})
-    return (call, oneachline, replase)
-
+            opns = dict()
+            # Token options
+            for opn, data in sdef[tkname].items():
+                if opn == "eachline":
+                    opns.update({"eachline": data})
+                elif opn == "replace":
+                    opns.update(
+                        {
+                            "replace": [
+                                (comp(repregex[0]), repregex[1])
+                                if 1 < len(repregex)
+                                else (comp(repregex[0]), "")
+                                for repregex in data
+                            ]
+                        }
+                    )
+                elif opn == "call":
+                    opns.update({"call": check_collections(data, collections)})
+            options[tkname] = opns
+    return options
 
 def extract(spattern):
     """
@@ -164,30 +165,32 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                 pattern = tpattern[part]
             else:
                 pattern = tpattern[part[2:]]
-            calls, oneachline, replacer = options[part]
+            tknopts = options[part]
             for tknmatch, partmatch in zip(tknmatches[part], partmatches[part]):
                 temp_pattern = pattern
                 for tkname, match in tknmatch.items():
-                    if tkname in oneachline:  # For oneachline option
-                        line = oneachline[tkname]
-                        match = "\n".join(
-                            [
-                                line.replace("<line>", l)
-                                for l in match.split("\n")
-                                if l.strip() != ""
-                            ]
-                        )
-                    if tkname in replacer:  # For replace option
-                        for rgx in replacer[tkname]:
-                            match = sub(*rgx, match)
                     # Token options
-                    if tkname in calls:  # For part calls
-                        match = main(
-                            yaml_details,
-                            match,
-                            donly_check=True,
-                            donly=calls[tkname],
-                        )
+                    if tkname in tknopts:
+                        for opn, data in tknopts[tkname].items():
+                            if opn == "replace":# For replace option
+                                            #List of replace
+                                for rgx in data:
+                                    match = sub(*rgx, match)
+                            elif opn == "call":  # For part calls
+                                match = main(
+                                    yaml_details,
+                                    match,
+                                    donly_check=True,
+                                    donly=data,#call list
+                                )
+                            elif opn == "eachline":  # For oneachline option
+                                match = "\n".join(
+                                    [ 
+                                        data.replace("<line>", l)
+                                        for l in match.split("\n")
+                                        if l.strip() != ""
+                                    ]
+                                )
                     # Replacing pattern tokens expression with tokens
                     temp_pattern = temp_pattern.replace(f"<{tkname}>", match)
                 content = content.replace(partmatch, temp_pattern)
