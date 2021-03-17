@@ -94,11 +94,11 @@ def extract(spattern):
             loplimit = setting["looplimit"]
         if "variables" in setting:  # Replacing variable name with its value
             for part, sdef in spattern.items():
-                if part != "settings":
-                    rv = sdef["regex"]  # regex with var
-                    for varname, rgx in reversed(setting["variables"].items()):
-                        if "<" + varname + ">" in rv:  # regex without var
-                            rv = rv.replace("<" + varname + ">", rgx)
+                rv = sdef["regex"]  # regex with var
+                for varname, rgx in reversed(setting["variables"].items()):
+                	varname = f"<{varname}>"
+                    if varname in rv:  # regex without var
+                        rv = rv.replace(varname, rgx)
                     spattern[part]["regex"] = rv
         if "collections" in setting:
             collections = setting["collections"]
