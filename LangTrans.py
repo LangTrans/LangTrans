@@ -251,7 +251,7 @@ def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d s
             print("Author:", settings["author"])
         del yaml["settings"]
     docs = []
-    p = t = e = 7
+    p = t = 7
     for part in yaml:
         tkns = str(yaml[part]["tokens"])
         for i in "'[] ":
@@ -264,9 +264,7 @@ def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d s
             p = len(part)
         if len(tkns) > t:
             t = len(tkns)
-        if len(about) > e:
-            e = len(about)
-    print("Part", " " * (p - 5), "Tokens", " " * (t - 7), "About", " " * (e - 6))
+    print("Part", " " * (p - 5), "Tokens", " " * (t - 7), "About")
     for part, tkns, about in docs:
         print(part + " " * (p - len(part)), tkns + " " * (t - len(tkns)), about)
 
