@@ -12,13 +12,13 @@ To customize syntax of any programming language.
 def check_collections(calls, collections):
     """
     This add collections into call list
-
+    
     :param calls: List with collection names and part names
     :type calls: list
     :param collections: Dictionary of collections and its names
     :type collections: dic
     """
-    if len(collections) == 0:
+    if not collections:  # len(collection)==0
         return calls
     narr = []
     for collection in calls:
@@ -32,7 +32,7 @@ def check_collections(calls, collections):
 def tknoptions(sdef, collections):
     """
     This function extract eachline and replace option from yaml
-
+    
     :param sdef: Contains token options
     :type spattern: dic
     :param collections: Dictionary of collections and its names
@@ -70,12 +70,22 @@ def tknoptions(sdef, collections):
                 elif opn == "call":
                     opns.update({"call": check_collections(data, collections)})
             options[tkname] = opns
-    return options
+
+    return options, check_collections(
+        sdef["next"] if "next" in sdef else [], collections
+    )
+
+
+def addvar(variables, rv):
+    for varname, value in reversed(variables.items()):
+        rv = rv.replace(f"<{varname}>", value)
+    return rv
+
 
 def extract(spattern):
     """
     This function extract contents needed from yaml file with regex
-
+    
     :param spattern: Dictionary with yaml file details
     :type spattern: dic
     :return: option(replace,eachline),regex,token_names
@@ -83,23 +93,20 @@ def extract(spattern):
     """
     # Settings---------------------------------------------------
     collections = dict()
-    loop = False
-    loplimit = 7
     if "settings" in spattern:
         setting = spattern["settings"]
         del spattern["settings"]
-        if "loop" in setting:
-            loop = setting["loop"]
-        if "looplimit" in setting:
-            loplimit = setting["looplimit"]
         if "variables" in setting:  # Replacing variable name with its value
+            variables = setting["variables"]
             for part, sdef in spattern.items():
-                rv = sdef["regex"]  # regex with var
-                for varname, rgx in reversed(setting["variables"].items()):
-                	varname = f"<{varname}>"
-                    if varname in rv:  # regex without var
-                        rv = rv.replace(varname, rgx)
-                    spattern[part]["regex"] = rv
+                spattern[part]["regex"] = addvar(variables, sdef["regex"])
+                for tkn in sdef["tokens"]:
+                    if tkn in sdef and "replace" in sdef[tkn]:
+                        for p, replaces in enumerate(sdef[tkn]["replace"]):
+                            spattern[part][tkn]["replace"][p][0] = addvar(
+                                variables, replaces[0]
+                            )
+
         if "collections" in setting:
             collections = setting["collections"]
     # ------------------------------------------------------------
@@ -108,20 +115,19 @@ def extract(spattern):
     global_chk = []
     tknames = []
     for part, sdef in spattern.items():
-        if part[0] == "_":
-            sdef["tokens"] = spattern[part[2:]]["tokens"]
+        tkns = spattern[part[2:]]["tokens"] if part[0] == "_" else sdef["tokens"]
         regexs.update({part: comp(sdef["regex"], MULTILINE)})
         options.update({part: tknoptions(sdef, collections)})
-        tknames.append(tuple(sdef["tokens"]))
+        tknames.append(tuple(tkns))
         if "global" not in sdef or sdef["global"]:
             global_chk.append(part)
-    return (options, regexs, tuple(tknames), tuple(global_chk), loop, loplimit)
+    return (options, regexs, tuple(tknames), tuple(global_chk))
 
 
 def main(yaml_details, content, donly_check=False, donly=[]):
     """
     This is main function convert new syntax to orginal syntax
-
+    
     :param content: Code with new syntax
     :param spattern: Dictionary containing regular expression for new syntax
     :param tpattern: Dictionary containing pattern of original syntax
@@ -131,13 +137,14 @@ def main(yaml_details, content, donly_check=False, donly=[]):
     :return: Return code with original syntax
     :rtype: str
     """
-    (options, regexs, tokens, global_chk, loop, loplimit), tpattern = yaml_details
+    (options, regexs, tokens, global_chk), tpattern = yaml_details
     lopcount = 0
     while 1:
         # matching tokens from code with regular expressions
         # --------------------------------------------------------------
         tknmatches = dict()
         partmatches = dict()
+        empty = True
         for (part, pattern), tknames in zip(regexs.items(), tokens):
             if donly_check:  # For recursion
                 if part not in donly:
@@ -146,6 +153,10 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                 continue
             # Part matching
             partmatches[part] = [i.group() for i in pattern.finditer(content)]
+            if empty:
+                if not partmatches[part]:  # len(partmatches[part]) == 0
+                    continue
+                empty = False
             # Token matching
             if len(tknames) == 1:
                 tknmatches[part] = [
@@ -153,56 +164,72 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                     for matched in partmatches[part]
                     for matches, tkname in zip(pattern.findall(matched), tknames)
                 ]
-                continue
-            tknmatches[part] = [
-                {tkname: match for match, tkname in zip(matches, tknames)}
-                for matched in partmatches[part]
-                for matches in pattern.findall(matched)
-            ]
+            else:
+                tknmatches[part] = [
+                    {tkname: match for match, tkname in zip(matches, tknames)}
+                    for matched in partmatches[part]
+                    for matches in pattern.findall(matched)
+                ]
+        if empty:
+            break
+        elif lopcount == 10**2:
+            content += (
+                "\n\nError:\tLoop Limit Exceded!\n\t"
+                + f"Bug Locations: {list(part for part,matches in partmatches.items() if matches)}"
+            )
+            break
+        lopcount += 1
         # ---------------------------------------------------------------
-        for part in tknmatches:  # Replacing parts in source code
+        for part, tknmatchez in tknmatches.items():  # Replacing parts in source code
             if part[0] != "_":  # Find two regex extract with one pattern
                 pattern = tpattern[part]
             else:
                 pattern = tpattern[part[2:]]
-            tknopts = options[part]
-            for tknmatch, partmatch in zip(tknmatches[part], partmatches[part]):
+            tknopts, next_optns = options[part]
+            for tknmatch, partmatch in zip(tknmatchez, partmatches[part]):
                 temp_pattern = pattern
                 for tkname, match in tknmatch.items():
-                    # Token options
-                    if tkname in tknopts:
-                        for opn, data in tknopts[tkname].items():
-                            if opn == "replace":# For replace option
-                                            #List of replace
-                                for rgx in data:
-                                    match = sub(*rgx, match)
-                            elif opn == "call":  # For part calls
-                                match = main(
-                                    yaml_details,
-                                    match,
-                                    donly_check=True,
-                                    donly=data,#call list
-                                )
-                            elif opn == "eachline":  # For oneachline option
-                                match = "\n".join(
-                                    [ 
-                                        data.replace("<line>", l)
-                                        for l in match.split("\n")
-                                        if l.strip() != ""
-                                    ]
-                                )
-                    # Replacing pattern tokens expression with tokens
-                    temp_pattern = temp_pattern.replace(f"<{tkname}>", match)
+                    if tkname not in tknopts:
+                        continue
+                    for opn, data in tknopts[tkname].items():
+                        # Token optionss
+                        if opn == "replace":
+                            # For replace option
+                            for rgx in data:  # List of replace
+                                match = sub(*rgx, match)
+                        elif opn == "call":
+                            match = main(
+                                yaml_details,
+                                match,
+                                donly_check=True,
+                                donly=data,  # call list
+                            )
+                        elif opn == "eachline":  # For oneachline option
+                            match = "\n".join(
+                                [
+                                    data.replace("<line>", l)
+                                    for l in match.split("\n")
+                                    if l.strip() != ""
+                                ]
+                            )
+                    tknmatch[tkname] = match
+                    # Replacing token names with its value
+                temp_pattern = addvar(tknmatch, addvar(tknmatch, temp_pattern))
+                # Token values added from other tokens
+                if next_optns:  # Next Part option
+                    temp_pattern = main(
+                        yaml_details,
+                        temp_pattern,
+                        donly_check=True,
+                        donly=next_optns,  # call list
+                    )
                 content = content.replace(partmatch, temp_pattern)
-        lopcount += 1
-        if not loop or lopcount == loplimit:
-            break
     return content
 
 
 def grab(argv, l):
-    spattern = load(open(argv[l] + ".yaml").read(), Loader=SafeLoader)  # Source
-    tpattern = load(open(argv[l + 1] + ".yaml").read(), Loader=SafeLoader)  # Target
+    spattern = load(open(argv[l] + ".yaml").read(), Loader=SafeLoader) # Source
+    tpattern = load(open(argv[l + 1] + ".yaml").read(), Loader=SafeLoader) # Target
     return extract(spattern), tpattern
 
 
