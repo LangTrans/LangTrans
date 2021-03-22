@@ -241,6 +241,36 @@ def save(argv, l):
     return yaml_details
 
 
+def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d source 
+    yaml = load(open(file + ".yaml").read(), Loader=SafeLoader)
+    if "settings" in yaml:
+        settings = yaml["settings"]
+        if "lang" in settings:
+            print("Language:", settings["lang"])
+        if "author" in settings:
+            print("Author:", settings["author"])
+        del yaml["settings"]
+    docs = []
+    p = t = e = 7
+    for part in yaml:
+        tkns = str(yaml[part]["tokens"])
+        for i in "'[] ":
+            tkns = tkns.replace(i, "")
+        about = ""
+        if "doc" in yaml[part]:
+            about += yaml[part]["doc"]
+        docs.append((part, tkns, about))
+        if len(part) > p:
+            p = len(part)
+        if len(tkns) > t:
+            t = len(tkns)
+        if len(about) > e:
+            e = len(about)
+    print("Part", " " * (p - 5), "Tokens", " " * (t - 7), "About", " " * (e - 6))
+    for part, tkns, about in docs:
+        print(part + " " * (p - len(part)), tkns + " " * (t - len(tkns)), about)
+
+
 if __name__ == "__main__":
     from sys import argv, exit
 
@@ -261,6 +291,9 @@ if __name__ == "__main__":
                 yaml_details = cload(open(argv[-1] + ".ltz", "rb"))
             except Exception:
                 yaml_details = save(argv, 3)
+        elif "-d" in argv:
+            doc(argv[-1])
+            exit()
         else:
             yaml_details = grab(argv, 3)
         content = open(argv[1]).read()
