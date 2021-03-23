@@ -152,6 +152,7 @@ Syntax
 		regex: regex (regex for token1) <var1> regex
 		tokens: ["token1","token2","token3"]
 		global: True
+		next: [other_typeofsyntax,$collection_name]
 		token1:
 			eachline: extra_here <line> extra_here
 			replace: [[regex,"replacewith"],["regex here"]]
@@ -180,7 +181,8 @@ Syntax
 | **regex** - Place where regular expression to extract particular block of code including tokens.
 | 			Regular expression for tokens must be inside brackets.
 | **tokens** - Name of tokens you wanted to extract
-| **global** - if it is False it works only after calling it otherwise it works normally.
+| **global** - If it is False it works only after calling it otherwise it works normally.
+| **next** - To pass converted syntax into another or same part
 | **token1** - You can modify tokens you extracted
 | 		 	*eachline* - You can additional content for eachline
 | 		 				<line> represents orginal content in eachline
@@ -198,7 +200,7 @@ Syntax
 | 		   		*looplimit* - Number of times to pass
 | 		  		*variables* - You can make variables than can used inside regular expression by <varname>
 |				*collections* - List of typeofsyntax/part with a name
-|						It can be called
+|						It can be used in call and next
 Example
 ^^^^^^^
 .. code-block:: yaml
