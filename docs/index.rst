@@ -33,14 +33,13 @@ Function
 
 	<dl class="py function">
 	<dt id="LangTrans.main">
-	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">yaml_details</span></em>, <em class="sig-param"><span class="n">tpattern</span></em>, <em class="sig-param"><span class="n">donly_check</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">donly</span><span class="o">=</span><span class="default_value">[]</span><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.main" title="Permalink to this definition">¶</a></dt>
+	<code class="sig-prename descclassname">LangTrans.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">yaml_details</span></em>, <em class="sig-param"><span class="n">donly_check</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">donly</span><span class="o">=</span><span class="default_value">[]</span><span class="sig-paren">)</span><a class="headerlink" href="#LangTrans.main" title="Permalink to this definition">¶</a></dt>
 	<dd><p>Convert new syntax to orginal syntax</p>
 	<dl class="field-list simple">
 	<dt class="field-odd">Parameters</dt>
 	<dd class="field-odd"><ul class="simple">
 	<li><p><strong>content</strong> (<em>str</em>) – Code with new syntax</p></li>
 	<li><p><strong>yaml_details</strong> (<em>tuple</em>) – Options extracted</p></li>
-	<li><p><strong>tpattern</strong> (<em>dic</em>) – Dictionary containing pattern of original syntax</p></li>
 	<li><p><strong>donly_check</strong> (<em>bool</em>) – Recursion or not boolean</p></li>
 	<li><p><strong>donly</strong> (<em>list</em>) – Array of part name that are called during recursion</p></li>
 	</ul>
