@@ -55,5 +55,5 @@ For more see the [Documentation](https://langtrans.readthedocs.io/en/latest/).
 
 [Share your language here](https://forms.gle/YDEKapaTZmJspyDeA)
 ### Downloads
-[Standalone](https://drive.google.com/uc?export=download&id=14lanbflcifeIM3PSCL3fF3rFxSBPrt7W)<br>
-[Installer](https://drive.google.com/uc?export=download&id=15soZJZCDrDP5KGVxvD5L9Sg7109XVc7y)
+[Standalone](https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe)<br>
+[Installer](https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe)
