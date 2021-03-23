@@ -12,7 +12,7 @@ To customize syntax of any programming language.
 def check_collections(calls, collections):
     """
     This add collections into call list
-    
+
     :param calls: List with collection names and part names
     :type calls: list
     :param collections: Dictionary of collections and its names
@@ -32,14 +32,14 @@ def check_collections(calls, collections):
 def tknoptions(sdef, collections):
     """
     This function extract eachline and replace option from yaml
-    
+
     :param sdef: Contains token options
     :type spattern: dic
     :param collections: Dictionary of collections and its names
     :return: [eachline_option,replace_option]
     :rtype: list
     """
-    options = dict()
+    tkn_options = dict()
     nsdef = dict()
     for tkns, opts in sdef.items():  # Spliting Token options
         if "," in tkns:
@@ -69,10 +69,10 @@ def tknoptions(sdef, collections):
                     )
                 elif opn == "call":
                     opns.update({"call": check_collections(data, collections)})
-            options[tkname] = opns
+            tkn_options[tkname] = opns
 
-    return options, check_collections(
-        sdef["next"] if "next" in sdef else [], collections
+    return tkn_options, (
+        check_collections(sdef["next"], collections) if "next" in sdef else []
     )
 
 
@@ -85,13 +85,16 @@ def addvar(variables, rv):
 def extract(spattern):
     """
     This function extract contents needed from yaml file with regex
-    
+
     :param spattern: Dictionary with yaml file details
     :type spattern: dic
     :return: option(replace,eachline),regex,token_names
     :rtype: dic,dic,list
     """
     # Settings---------------------------------------------------
+    for part in spattern:  # For two regex extract with one pattern
+        if part[0] == "_":
+            spattern[part]["tokens"] = spattern[part[2:]]["tokens"]
     collections = dict()
     if "settings" in spattern:
         setting = spattern["settings"]
@@ -103,31 +106,31 @@ def extract(spattern):
                 for tkn in sdef["tokens"]:
                     if tkn in sdef and "replace" in sdef[tkn]:
                         for p, replaces in enumerate(sdef[tkn]["replace"]):
-                            spattern[part][tkn]["replace"][p][0] = addvar(
-                                variables, replaces[0]
-                            )
+                            spattern[part][tkn]["replace"][p][0] = addvar(variables, replaces[0])
 
         if "collections" in setting:
             collections = setting["collections"]
     # ------------------------------------------------------------
-    options = dict()
-    regexs = dict()
-    global_chk = []
-    tknames = []
+    tkn_options = dict()
+    part_options = dict()
     for part, sdef in spattern.items():
-        tkns = spattern[part[2:]]["tokens"] if part[0] == "_" else sdef["tokens"]
-        regexs.update({part: comp(sdef["regex"], MULTILINE)})
-        options.update({part: tknoptions(sdef, collections)})
-        tknames.append(tuple(tkns))
-        if "global" not in sdef or sdef["global"]:
-            global_chk.append(part)
-    return (options, regexs, tuple(tknames), tuple(global_chk))
+        part_options.update(
+            {
+                part: (
+                    comp(sdef["regex"], MULTILINE),  # Compiled regex
+                    sdef["tokens"],  # Token_names
+                    ("global" not in sdef or sdef["global"]),  # Checking Global
+                )
+            }
+        )
+        tkn_options.update({part: tknoptions(sdef, collections)})
+    return part_options, tkn_options
 
 
 def main(yaml_details, content, donly_check=False, donly=[]):
     """
     This is main function convert new syntax to orginal syntax
-    
+
     :param content: Code with new syntax
     :param spattern: Dictionary containing regular expression for new syntax
     :param tpattern: Dictionary containing pattern of original syntax
@@ -137,7 +140,7 @@ def main(yaml_details, content, donly_check=False, donly=[]):
     :return: Return code with original syntax
     :rtype: str
     """
-    (options, regexs, tokens, global_chk), tpattern = yaml_details
+    (part_options, tkn_options), tpattern = yaml_details
     lopcount = 0
     while 1:
         # matching tokens from code with regular expressions
@@ -145,11 +148,11 @@ def main(yaml_details, content, donly_check=False, donly=[]):
         tknmatches = dict()
         partmatches = dict()
         empty = True
-        for (part, pattern), tknames in zip(regexs.items(), tokens):
+        for part, (pattern, tknames, global_chk) in part_options.items():
             if donly_check:  # For recursion
                 if part not in donly:
                     continue
-            elif part not in global_chk:
+            elif not global_chk:
                 continue
             # Part matching
             partmatches[part] = [i.group() for i in pattern.finditer(content)]
@@ -170,9 +173,9 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                     for matched in partmatches[part]
                     for matches in pattern.findall(matched)
                 ]
-        if empty:
+        if empty:  # Break when no match found
             break
-        elif lopcount == 10**2:
+        elif lopcount == 10 ** 2:
             content += (
                 "\n\nError:\tLoop Limit Exceded!\n\t"
                 + f"Bug Locations: {list(part for part,matches in partmatches.items() if matches)}"
@@ -181,11 +184,9 @@ def main(yaml_details, content, donly_check=False, donly=[]):
         lopcount += 1
         # ---------------------------------------------------------------
         for part, tknmatchez in tknmatches.items():  # Replacing parts in source code
-            if part[0] != "_":  # Find two regex extract with one pattern
-                pattern = tpattern[part]
-            else:
-                pattern = tpattern[part[2:]]
-            tknopts, next_optns = options[part]
+            # For two regex extract with one pattern
+            pattern = tpattern[part[2:]] if part[0] == "_" else tpattern[part]
+            tknopts, next_optns = tkn_options[part]
             for tknmatch, partmatch in zip(tknmatchez, partmatches[part]):
                 temp_pattern = pattern
                 for tkname, match in tknmatch.items():
@@ -198,12 +199,7 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                             for rgx in data:  # List of replace
                                 match = sub(*rgx, match)
                         elif opn == "call":
-                            match = main(
-                                yaml_details,
-                                match,
-                                donly_check=True,
-                                donly=data,  # call list
-                            )
+                            match = re_main(content=match, donly=data)  # call list
                         elif opn == "eachline":  # For oneachline option
                             match = "\n".join(
                                 [
@@ -217,19 +213,14 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                 temp_pattern = addvar(tknmatch, addvar(tknmatch, temp_pattern))
                 # Token values added from other tokens
                 if next_optns:  # Next Part option
-                    temp_pattern = main(
-                        yaml_details,
-                        temp_pattern,
-                        donly_check=True,
-                        donly=next_optns,  # call list
-                    )
+                    temp_pattern = re_main(content=temp_pattern, donly=next_optns)  # call list
                 content = content.replace(partmatch, temp_pattern)
     return content
 
 
 def grab(argv, l):
-    spattern = load(open(argv[l] + ".yaml").read(), Loader=SafeLoader) # Source
-    tpattern = load(open(argv[l + 1] + ".yaml").read(), Loader=SafeLoader) # Target
+    spattern = load(open(argv[l] + ".yaml").read(), Loader=SafeLoader)  # Source
+    tpattern = load(open(argv[l + 1] + ".yaml").read(), Loader=SafeLoader)  # Target
     return extract(spattern), tpattern
 
 
@@ -241,7 +232,7 @@ def save(argv, l):
     return yaml_details
 
 
-def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d source 
+def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d source
     yaml = load(open(file + ".yaml").read(), Loader=SafeLoader)
     if "settings" in yaml:
         settings = yaml["settings"]
@@ -295,6 +286,9 @@ if __name__ == "__main__":
         else:
             yaml_details = grab(argv, 3)
         content = open(argv[1]).read()
+        from functools import partial
+
+        re_main = partial(main, yaml_details=yaml_details, donly_check=True)
         targetcode = main(yaml_details, content)
         open(argv[2], "w").write(targetcode)
         print(targetcode)
