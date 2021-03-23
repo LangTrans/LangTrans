@@ -179,6 +179,6 @@ As Module
 Downloads
 =========
 
-| `Standalone <https://drive.google.com/uc?export=download&id=14lanbflcifeIM3PSCL3fF3rFxSBPrt7W>`_
-| `Installer <https://drive.google.com/uc?export=download&id=15soZJZCDrDP5KGVxvD5L9Sg7109XVc7y>`_
-| `Source Code <https://github.com/B-R-P/LangTrans>`_
+| `Standalone <https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe>`_
+| `Installer <https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe>`_
+| `Source Code <https://github.com/LangTrans/LangTrans>`_
