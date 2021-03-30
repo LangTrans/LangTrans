@@ -91,6 +91,13 @@ Syntax
 			var1: #regex
 			var2: #regex
 			var3 : #regex
+		after: #Command Line Commands
+		#after:
+		#- Command One
+		#- Command Two
+		#after:
+		#	windows: Command 
+		#	linux: Command
 
 | **typeofsyntax** - Type of syntax you wanted to match(arithmetic,loop,etc)
 | 			   		If one type have same pattern and different regex
@@ -117,6 +124,9 @@ Syntax
 | 		  		*variables* - You can make variables than can used inside regular expression by <varname>
 |				*collections* - List of typeofsyntax/part with a name
 |						It can be used in call and next
+|				*after* - To run command line commands after translation
+|					  $target and $source can be used inside command($target-address of translated file,$source-address of source file)
+|					  eg. python $target
 Example
 ^^^^^^^
 .. code-block:: yaml
