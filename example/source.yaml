@@ -146,3 +146,4 @@ settings:
     i2: .*)*\n*)*)
     func: "([A-Ba-z_\\-]+)"
     op: "[+-/*]"
+  #after: clisp $target
