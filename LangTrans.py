@@ -1,6 +1,5 @@
-from yaml import load, SafeLoader
 from re import compile as comp, MULTILINE, sub
-from pickle import dump, load as cload, HIGHEST_PROTOCOL
+from functools import partial
 
 """
 LangTrans
@@ -96,9 +95,11 @@ def extract(spattern):
         if part[0] == "_":
             spattern[part]["tokens"] = spattern[part[2:]]["tokens"]
     collections = dict()
+    after=None
     if "settings" in spattern:
         setting = spattern["settings"]
         del spattern["settings"]
+        after=setting.get("after") # Cmd command after translation
         if "variables" in setting:  # Replacing variable name with its value
             variables = setting["variables"]
             for part, sdef in spattern.items():
@@ -124,7 +125,7 @@ def extract(spattern):
             }
         )
         tkn_options.update({part: tknoptions(sdef, collections)})
-    return part_options, tkn_options
+    return after, (part_options, tkn_options)
 
 
 def main(yaml_details, content, donly_check=False, donly=[]):
@@ -209,9 +210,9 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                                 ]
                             )
                     tknmatch[tkname] = match
-                    # Replacing token names with its value
+                                                # Replacing token names with its value
                 temp_pattern = addvar(tknmatch, addvar(tknmatch, temp_pattern))
-                # Token values added from other tokens
+                            # Token values added from other tokens
                 if next_optns:  # Next Part option
                     temp_pattern = re_main(content=temp_pattern, donly=next_optns)  # call list
                 content = content.replace(partmatch, temp_pattern)
@@ -219,12 +220,15 @@ def main(yaml_details, content, donly_check=False, donly=[]):
 
 
 def grab(argv, l):
+    from yaml import load, SafeLoader
     spattern = load(open(argv[l] + ".yaml").read(), Loader=SafeLoader)  # Source
     tpattern = load(open(argv[l + 1] + ".yaml").read(), Loader=SafeLoader)  # Target
-    return extract(spattern), tpattern
+    after, rest = extract(spattern)
+    return after, (rest, tpattern)
 
 
 def save(argv, l):
+    from pickle import dump, HIGHEST_PROTOCOL
     argv[-1] += ".ltz"
     yaml_details = grab(argv, l)
     dump(yaml_details, open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL)
@@ -233,6 +237,7 @@ def save(argv, l):
 
 
 def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d source
+    from yaml import load, SafeLoader
     yaml = load(open(file + ".yaml").read(), Loader=SafeLoader)
     if "settings" in yaml:
         settings = yaml["settings"]
@@ -262,7 +267,6 @@ def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d s
 
 if __name__ == "__main__":
     from sys import argv, exit
-
     if len(argv) == 1 or (len(argv) == 2 and argv[1] == "-h"):
         print("Arg usage: <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
         print("SyntaxRepr,PatternRepr: without extension(.yaml) ")
@@ -276,8 +280,9 @@ if __name__ == "__main__":
             exit()
         if "-f" in argv:  # Use ltz
             argv.remove("-f")
+            from pickle import load
             try:
-                yaml_details = cload(open(argv[-1] + ".ltz", "rb"))
+                yaml_details = load(open(argv[-1] + ".ltz", "rb"))
             except Exception:
                 yaml_details = save(argv, 3)
         elif "-d" in argv:
@@ -285,12 +290,35 @@ if __name__ == "__main__":
             exit()
         else:
             yaml_details = grab(argv, 3)
+        yes = '-y' in argv # To run after command automatically
+        if yes:
+        	argv.remove('-y')
+        after, yaml_details = yaml_details
         content = open(argv[1]).read()
-        from functools import partial
-
         re_main = partial(main, yaml_details=yaml_details, donly_check=True)
         targetcode = main(yaml_details, content)
         open(argv[2], "w").write(targetcode)
         print(targetcode)
+        # For after command in settings
+        if after: # Not None
+        	from os import system
+	        if isinstance(after, list): # For multiple commands
+	        	after = " && ".join(after)
+	        elif isinstance(after,dict): # After command for different OS
+	        	from platform import system
+	        	try:			# Current os name
+	        		after = after[system().lower()]
+	        	except KeyError:
+	        		print("Os name is invalid. OS name eg. linux, windows")
+	        if not isinstance(after, str):	print("Invalid after command");exit()
+	        # To use address of source and target file in after command
+	        for var,val in zip(["$target","$source"],[argv[2],argv[1]]):
+	                after=after.replace(var,val)
+	        if yes:
+	        	system(after)
+	        	exit()
+	        inp = input(f"\nEnter to run and n to exit\nCommand:{after}\n")
+	        if inp.lower()!="n":
+	            system(after)
     except Exception as err:
         print("Error:", err)
