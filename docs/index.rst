@@ -120,7 +120,7 @@ Syntax
 |			*call* - To call another regex from another part/typeofsyntax
 |				 Write name of part/typeofsyntax inside array of call.
 |				 It work only on token(token1) part extracted from source code.
-| **settings** - In setting you have loop, looplimit and variables
+| **settings** - For settings, like variables, collections, after command
 | 		  		*variables* - You can make variables than can used inside regular expression by <varname>
 |				*collections* - List of typeofsyntax/part with a name
 |						It can be used in call and next
@@ -135,7 +135,6 @@ Example
 	  regex: <var>\+=<var>
 	  tokens: [var,num]
 	settings:
-		loop: False
 		variables:
 			var: ([A-Za-z0-9_]+)
 
