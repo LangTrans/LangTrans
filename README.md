@@ -10,6 +10,44 @@ It helps you to customize the syntax of any programming language<br>
 It converts customized syntax to original syntax.<br>
 It uses regular expression but it supports nesting(called part calling).
 ### Example
+##### Customized Syntax
+```py
+p"Hello World"
+inc = (x) => x+1
+twice(x) = 2*x
+add(x,y) = x+y
+print(![inc => 1..6])
+print|inc|inc(1)
+try inc("1") Exception print("Error:",err)
+test ="test"
+=test.replace("test","")
+print((x||True)?"Done":"Failed")
+print('x is not defined') if !x
+1 -> inc -> print
+print((inc+twice)(3))
+```
+
+##### Orginal Syntax
+```python
+print("Hello World")
+inc = lambda x: x+1
+twice = lambda x:2*x
+add = lambda x,y:x+y
+print(list(map(inc,range(1,6+1))))
+print(inc(inc(1)))
+try:
+  inc("1")
+except Exception as err:
+  print("Error:",err)
+test ="test"
+test=test.replace("test","")
+print("Done" if (x if 'x' in locals() else True) else "Failed")
+if 'x' not in locals():
+  print('x is not defined')
+print(inc(1))
+print(inc(3)+twice(3))
+```
+
 ##### Customized Syntax of LISP
 
 ```python
