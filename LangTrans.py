@@ -1,12 +1,10 @@
 from re import compile as comp, MULTILINE, sub
 from functools import partial
-
 """
 LangTrans
 ---------
 To customize syntax of any programming language.
 """
-
 
 def check_collections(calls, collections):
     """
@@ -16,6 +14,7 @@ def check_collections(calls, collections):
     :type calls: list
     :param collections: Dictionary of collections and its names
     :type collections: dic
+    :return: Collection replaced call list
     """
     if not collections:  # len(collection)==0
         return calls
@@ -27,18 +26,17 @@ def check_collections(calls, collections):
             narr.append(collection)
     return narr
 
-
 def tknoptions(sdef, collections):
     """
-    This function extract eachline and replace option from yaml
+    This function extract token options from yaml file
 
     :param sdef: Contains token options
     :type spattern: dic
     :param collections: Dictionary of collections and its names
-    :return: [eachline_option,replace_option]
-    :rtype: list
+    :return: translation options and next call list
+    :rtype: dic,list
     """
-    tkn_options = dict()
+    trans_options = dict()
     nsdef = dict()
     for tkns, opts in sdef.items():  # Spliting Token options
         if "," in tkns:
@@ -68,18 +66,22 @@ def tknoptions(sdef, collections):
                     )
                 elif opn == "call":
                     opns.update({"call": check_collections(data, collections)})
-            tkn_options[tkname] = opns
-
-    return tkn_options, (
-        check_collections(sdef["next"], collections) if "next" in sdef else []
-    )
-
+            trans_options[tkname] = opns
+    return trans_options, (check_collections(sdef["next"], collections) if "next" in sdef else [])
 
 def addvar(variables, rv):
+    """
+    To Replace <varname> with its value
+    :param variable: Dictionary of variables
+    :param rv: String containing <varname>
+    :type variable: dict
+    :type rv: str
+    :return: variable replaced string
+    :rtype: str
+    """
     for varname, value in reversed(variables.items()):
         rv = rv.replace(f"<{varname}>", value)
     return rv
-
 
 def extract(spattern):
     """
@@ -87,48 +89,88 @@ def extract(spattern):
 
     :param spattern: Dictionary with yaml file details
     :type spattern: dic
-    :return: option(replace,eachline),regex,token_names
-    :rtype: dic,dic,list
+    :return: after command and (match options, token options)
+    :rtype: (None|str|list|dic),tuple(dic,dic)
     """
     # Settings---------------------------------------------------
     for part in spattern:  # For two regex extract with one pattern
         if part[0] == "_":
             spattern[part]["tokens"] = spattern[part[2:]]["tokens"]
-    collections = dict()
-    after=None
+    after = None
     if "settings" in spattern:
         setting = spattern["settings"]
         del spattern["settings"]
-        after=setting.get("after") # Cmd command after translation
-        if "variables" in setting:  # Replacing variable name with its value
-            variables = setting["variables"]
-            for part, sdef in spattern.items():
+        after = setting.get("after")
+        from os.path import dirname
+        # Importing builtin variables
+        variables = grab_var(dirname(__file__) + "\\builtin")
+        if "varfile" in setting: # Importing variables from varfile
+            variables.update(grab_var(setting["varfile"]))
+        if "variables" in setting: # Adding variables in settings
+            variables.update(setting["variables"])
+        if variables: # Replacing variable name with its value
+            for part, sdef in spattern.items():  # For regex in part
                 spattern[part]["regex"] = addvar(variables, sdef["regex"])
-                for tkn in sdef["tokens"]:
+                for tkn in sdef["tokens"]: # For replace option in token options
                     if tkn in sdef and "replace" in sdef[tkn]:
                         for p, replaces in enumerate(sdef[tkn]["replace"]):
                             spattern[part][tkn]["replace"][p][0] = addvar(variables, replaces[0])
-
-        if "collections" in setting:
-            collections = setting["collections"]
+        del variables
+        collections = setting["collections"] if "collections" in setting else dict()
     # ------------------------------------------------------------
-    tkn_options = dict()
-    part_options = dict()
+    trans_options = dict()
+    match_options = dict()
     for part, sdef in spattern.items():
-        part_options.update(
+        match_options.update(
             {
                 part: (
-                    comp(sdef["regex"], MULTILINE),  # Compiled regex
-                    sdef["tokens"],  # Token_names
-                    ("global" not in sdef or sdef["global"]),  # Checking Global
+                    comp(sdef["regex"], MULTILINE), # Compiled regex
+                    sdef["tokens"], # Token_names
+                    ("global" not in sdef or sdef["global"]), # Checking Global
                 )
             }
         )
-        tkn_options.update({part: tknoptions(sdef, collections)})
-    return after, (part_options, tkn_options)
+        trans_options.update({part: tknoptions(sdef, collections)})
+    return after, (match_options, trans_options)
 
+def matching(content, match_options, isrecursion):
+    """
+    To match parts of source code
+    :param match_options: Options for each part in yaml file
+    :param isrecursion: Boolean to find main function is in recursion or not
+    :type match_options: dict
+    :type isrecursion: bool
+    :return: Return matched parts and tokens
+    :rtype: bool,dict,dict
+    """
+    tknmatches = dict()
+    partmatches = dict()
+    empty = True
+    for part, (pattern, tknames, global_chk) in match_options.items():
+        if not (isrecursion or global_chk): # (not isrecursion) and (not global_chk)
+            continue
+        # Part matching
+        partmatches[part] = [i.group() for i in pattern.finditer(content)]
+        if empty:
+            if not partmatches[part]:  # len(partmatches[part]) == 0
+                continue
+            empty = False
+        # Token matching
+        if len(tknames) == 1:
+            tknmatches[part] = [
+                {tkname: matches}
+                for matched in partmatches[part]
+                for matches, tkname in zip(pattern.findall(matched), tknames)
+            ]
+        else:
+	        tknmatches[part] = [
+	            {tkname: match for match, tkname in zip(matches, tknames)}
+	            for matched in partmatches[part]
+	            for matches in pattern.findall(matched)
+	        ]
+    return empty, partmatches, tknmatches
 
-def main(yaml_details, content, donly_check=False, donly=[]):
+def main(yaml_details, content, isrecursion=False, donly=[]):
     """
     This is main function convert new syntax to orginal syntax
 
@@ -141,42 +183,15 @@ def main(yaml_details, content, donly_check=False, donly=[]):
     :return: Return code with original syntax
     :rtype: str
     """
-    (part_options, tkn_options), tpattern = yaml_details
+    (match_options, trans_options), tpattern = yaml_details
     lopcount = 0
     while 1:
-        # matching tokens from code with regular expressions
-        # --------------------------------------------------------------
-        tknmatches = dict()
-        partmatches = dict()
-        empty = True
-        for part, (pattern, tknames, global_chk) in part_options.items():
-            if donly_check:  # For recursion
-                if part not in donly:
-                    continue
-            elif not global_chk:
-                continue
-            # Part matching
-            partmatches[part] = [i.group() for i in pattern.finditer(content)]
-            if empty:
-                if not partmatches[part]:  # len(partmatches[part]) == 0
-                    continue
-                empty = False
-            # Token matching
-            if len(tknames) == 1:
-                tknmatches[part] = [
-                    {tkname: matches}
-                    for matched in partmatches[part]
-                    for matches, tkname in zip(pattern.findall(matched), tknames)
-                ]
-            else:
-                tknmatches[part] = [
-                    {tkname: match for match, tkname in zip(matches, tknames)}
-                    for matched in partmatches[part]
-                    for matches in pattern.findall(matched)
-                ]
+        if isrecursion:
+        	match_options = {part:match_options[part] for part in donly}
+        empty, partmatches, tknmatches = matching(content, match_options, isrecursion)
         if empty:  # Break when no match found
             break
-        elif lopcount == 10 ** 2:
+        elif lopcount > 100:
             content += (
                 "\n\nError:\tLoop Limit Exceded!\n\t"
                 + f"Bug Locations: {list(part for part,matches in partmatches.items() if matches)}"
@@ -184,10 +199,10 @@ def main(yaml_details, content, donly_check=False, donly=[]):
             break
         lopcount += 1
         # ---------------------------------------------------------------
-        for part, tknmatchez in tknmatches.items():  # Replacing parts in source code
+        for part, tknmatchez in tknmatches.items():  # Translation
             # For two regex extract with one pattern
             pattern = tpattern[part[2:]] if part[0] == "_" else tpattern[part]
-            tknopts, next_optns = tkn_options[part]
+            tknopts, next_optns = trans_options[part]
             for tknmatch, partmatch in zip(tknmatchez, partmatches[part]):
                 temp_pattern = pattern
                 for tkname, match in tknmatch.items():
@@ -195,39 +210,77 @@ def main(yaml_details, content, donly_check=False, donly=[]):
                         continue
                     for opn, data in tknopts[tkname].items():
                         # Token optionss
-                        if opn == "replace":
-                            # For replace option
-                            for rgx in data:  # List of replace
-                                match = sub(*rgx, match)
-                        elif opn == "call":
-                            match = re_main(content=match, donly=data)  # call list
-                        elif opn == "eachline":  # For oneachline option
-                            match = "\n".join(
-                                [
-                                    data.replace("<line>", l)
-                                    for l in match.split("\n")
-                                    if l.strip() != ""
-                                ]
-                            )
+	                    if opn == "replace":
+	                        # For replace option
+	                        for rgx in data:  # List of replace
+	                            match = sub(*rgx, match)
+	                    elif opn == "call":
+	                    	match = re_main(content=match, donly=data)  # call list
+	                    elif opn == "eachline":  # For oneachline option
+	                        match = "\n".join(
+	                            [
+	                                data.replace("<line>", l)
+	                                for l in match.split("\n")
+	                                if l.strip() != ""
+	                            ]
+	                        )
                     tknmatch[tkname] = match
-                                                # Replacing token names with its value
+                    # Replacing token names with its value
                 temp_pattern = addvar(tknmatch, addvar(tknmatch, temp_pattern))
-                            # Token values added from other tokens
+                # Token values added from other tokens
                 if next_optns:  # Next Part option
-                    temp_pattern = re_main(content=temp_pattern, donly=next_optns)  # call list
+                    temp_pattern = re_main(content=temp_pattern, donly=next_optns)
                 content = content.replace(partmatch, temp_pattern)
     return content
 
-
 def grab(argv, l):
+    """
+    To get details from yaml files
+    :param argv: array of arguments
+    :param l: location of argument need
+    :type argv: list
+    :type l: int
+    :return: after command and yaml details
+    :rtype:  (str or list or dic or None), tuple(dic,dic)
+    """
     from yaml import load, SafeLoader
+
     spattern = load(open(argv[l] + ".yaml").read(), Loader=SafeLoader)  # Source
     tpattern = load(open(argv[l + 1] + ".yaml").read(), Loader=SafeLoader)  # Target
     after, rest = extract(spattern)
     return after, (rest, tpattern)
 
+def grab_var(file):
+    """
+    To variables from external file
+    :param file: Address of external file
+    :type file: str
+    :return: Dictionary of variables
+    :rtype: dic
+    """
+    from yaml import load, SafeLoader
+
+    variables = dict()
+    try:
+        v = load(open(file + ".yaml").read(), Loader=SafeLoader)
+        if v != None:
+            variables.update(v)
+    except FileNotFoundError:
+        print(f"varfile({file}.yaml) not found\n")
+    except ValueError:
+        print(f"Invalid varfile({file}.yaml)\n")
+    return variables
 
 def save(argv, l):
+    """
+    To save yaml details into single file
+    :param argv: array of arguments
+    :param l: location of argument need
+    :type argv: list
+    :type l: int
+    :return: yaml details
+    :rtype: tuple
+    """
     from pickle import dump, HIGHEST_PROTOCOL
     argv[-1] += ".ltz"
     yaml_details = grab(argv, l)
@@ -235,8 +288,13 @@ def save(argv, l):
     print("File saved as", argv[-1])
     return yaml_details
 
-
-def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d source
+def doc(file):
+    """
+    To print documentation of part in yaml file
+    CommandLine: python langtrans.py -d source
+    :param file: Addres of file
+    :type file: str
+    """
     from yaml import load, SafeLoader
     yaml = load(open(file + ".yaml").read(), Loader=SafeLoader)
     if "settings" in yaml:
@@ -264,9 +322,9 @@ def doc(file):  # Printing Documentation # CommandLine: python langtrans.py -d s
     for part, tkns, about in docs:
         print(part + " " * (p - len(part)), tkns + " " * (t - len(tkns)), about)
 
-
 if __name__ == "__main__":
     from sys import argv, exit
+
     if len(argv) == 1 or (len(argv) == 2 and argv[1] == "-h"):
         print("Arg usage: <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
         print("SyntaxRepr,PatternRepr: without extension(.yaml) ")
@@ -275,50 +333,53 @@ if __name__ == "__main__":
         print("Error: Insufficient number of arguments")
         exit()
     try:
-        if "-c" in argv:  # Combine into ltz
-            save(argv, 2)
-            exit()
-        if "-f" in argv:  # Use ltz
-            argv.remove("-f")
-            from pickle import load
-            try:
-                yaml_details = load(open(argv[-1] + ".ltz", "rb"))
-            except Exception:
-                yaml_details = save(argv, 3)
-        elif "-d" in argv:
-            doc(argv[-1])
-            exit()
-        else:
-            yaml_details = grab(argv, 3)
-        yes = '-y' in argv # To run after command automatically
-        if yes:
-        	argv.remove('-y')
-        after, yaml_details = yaml_details
-        content = open(argv[1]).read()
-        re_main = partial(main, yaml_details=yaml_details, donly_check=True)
-        targetcode = main(yaml_details, content)
-        open(argv[2], "w").write(targetcode)
-        print(targetcode)
-        # For after command in settings
-        if after: # Not None
-        	from os import system
-	        if isinstance(after, list): # For multiple commands
-	        	after = " && ".join(after)
-	        elif isinstance(after,dict): # After command for different OS
-	        	from platform import system
-	        	try:			# Current os name
-	        		after = after[system().lower()]
-	        	except KeyError:
-	        		print("Os name is invalid. OS name eg. linux, windows")
-	        if not isinstance(after, str):	print("Invalid after command");exit()
-	        # To use address of source and target file in after command
-	        for var,val in zip(["$target","$source"],[argv[2],argv[1]]):
-	                after=after.replace(var,val)
+	    if "-c" in argv:  # Combine into ltz
+	        save(argv, 2)
+	        exit()
+	    if "-f" in argv:  # Use ltz
+	        argv.remove("-f")
+	        from pickle import load
+	        try:
+	            yaml_details = load(open(argv[-1] + ".ltz", "rb"))
+	        except Exception:
+	            yaml_details = save(argv, 3)
+	    elif "-d" in argv:
+	        doc(argv[-1])
+	        exit()
+	    else:
+	        yaml_details = grab(argv, 3)
+	    yes = "-y" in argv  # To run after command automatically
+	    if yes:
+	        argv.remove("-y")
+	    after, yaml_details = yaml_details
+	    content = open(argv[1]).read()
+	    re_main = partial(main, yaml_details=yaml_details, isrecursion=True)
+	    targetcode = main(yaml_details, content)
+	    open(argv[2], "w").write(targetcode)
+	    print(targetcode)
+	    # For after command in settings
+	    if after:  # Not None
+	        from os import system
+	        if isinstance(after, list):  # For multiple commands
+	            after = " && ".join(after)
+	        elif isinstance(after, dict):  # After command for different OS
+	            from platform import system
+	            osname = system().lower()  # Current os name
+	            if osname not in after:
+	                print(f"No after command for {osname}. OS name eg. linux, windows")
+	                exit()
+	            after = after[osname]
+	        if not isinstance(after, str):
+	            print("Invalid after command")
+	            exit()
+	        # To use address of source and target file in 'after' command
+	        for var, val in zip(["$target", "$source"], [argv[2], argv[1]]):
+	            after = after.replace(var, val)
 	        if yes:
-	        	system(after)
-	        	exit()
+	            system(after)
+	            exit()
 	        inp = input(f"\nEnter to run and n to exit\nCommand:{after}\n")
-	        if inp.lower()!="n":
+	        if inp.lower() != "n":
 	            system(after)
     except Exception as err:
         print("Error:", err)
