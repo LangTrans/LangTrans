@@ -72,7 +72,7 @@ def tknoptions(sdef, collections):
 def addvar(variables, rv):
     """
     To Replace <varname> with its value
-    
+
     :param variables: Dictionary of variables
     :param rv: String containing <varname>
     :type variable: dict
@@ -93,7 +93,7 @@ def extract(spattern):
     :return: after command and (match options, token options)
     :rtype: (None|str|list|dic),tuple(dic,dic)
     """
-    # Settings---------------------------------------------------
+    # Settings-----------------------------------------------------
     for part in spattern:  # For two regex extract with one pattern
         if part[0] == "_":
             spattern[part]["tokens"] = spattern[part[2:]]["tokens"]
@@ -118,7 +118,7 @@ def extract(spattern):
                             spattern[part][tkn]["replace"][p][0] = addvar(variables, replaces[0])
         del variables
         collections = setting["collections"] if "collections" in setting else dict()
-    # ------------------------------------------------------------
+    # --------------------------------------------------------------
     trans_options = dict()
     match_options = dict()
     for part, sdef in spattern.items():
@@ -137,7 +137,7 @@ def extract(spattern):
 def matching(content, match_options, isrecursion):
     """
     To match parts of source code
-    
+
     :param content: source code
     :param match_options: Options for each part in yaml file
     :param isrecursion: Boolean to find main function is in recursion or not
@@ -242,9 +242,9 @@ def main(yaml_details, content, isrecursion=False, donly=[]):
 def grab(argv, l):
     """
     To get details from yaml files
-    
+
     :param argv: array of arguments
-    :param l: location of argument need
+    :param l: location of argument needed
     :type argv: list
     :type l: int
     :return: after command and yaml details
@@ -260,7 +260,7 @@ def grab(argv, l):
 def grab_var(file):
     """
     To variables from external file
-    
+
     :param file: Address of external file
     :type file: str
     :return: Dictionary of variables
@@ -282,9 +282,9 @@ def grab_var(file):
 def save(argv, l):
     """
     To save yaml details into single file
-    
+
     :param argv: array of arguments
-    :param l: location of argument need
+    :param l: location of argument needed
     :type argv: list
     :type l: int
     :return: yaml details
@@ -300,8 +300,8 @@ def save(argv, l):
 def doc(file):
     """
     To print documentation of part in yaml file
-    
     CommandLine: python langtrans.py -d source
+
     :param file: Addres of file
     :type file: str
     """
