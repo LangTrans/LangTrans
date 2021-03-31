@@ -21,13 +21,6 @@ LangTrans take both yaml files as input and convert code written in new syntax t
    :caption: Contents:
    :numbered:
 
-Function
-========
-
- .. automodule:: LangTrans
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 Implementation
 ==============
@@ -60,6 +53,7 @@ Syntax
 	settings:
 		collections:
 			collection_name: [typeofsyntax1,typeofsyntax2]
+		varfile: filename_without_extension
 		variables:
 			var1: #regex
 			var2: #regex
@@ -95,6 +89,7 @@ Syntax
 |				 It work only on token(token1) part extracted from source code.
 | **settings** - For settings, like variables, collections, after command
 | 		  		*variables* - You can make variables than can used inside regular expression by <varname>
+|				*varfile* - To import variables from other yaml file(filename.yaml)
 |				*collections* - List of typeofsyntax/part with a name
 |						It can be used in call and next
 |				*after* - To run command line commands after translation
@@ -130,6 +125,14 @@ Example
 .. code-block:: yaml
 
 	shorthand: (incf <var> <num>)
+
+Functions
+========
+
+ .. automodule:: LangTrans
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Command Line
 ============
