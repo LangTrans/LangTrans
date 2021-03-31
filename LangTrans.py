@@ -72,7 +72,7 @@ def tknoptions(sdef, collections):
 def addvar(variables, rv):
     """
     To Replace <varname> with its value
-    :param variable: Dictionary of variables
+    :param variables: Dictionary of variables
     :param rv: String containing <varname>
     :type variable: dict
     :type rv: str
@@ -136,8 +136,10 @@ def extract(spattern):
 def matching(content, match_options, isrecursion):
     """
     To match parts of source code
+    :param content: source code
     :param match_options: Options for each part in yaml file
     :param isrecursion: Boolean to find main function is in recursion or not
+    :type content: str
     :type match_options: dict
     :type isrecursion: bool
     :return: Return matched parts and tokens
@@ -175,11 +177,13 @@ def main(yaml_details, content, isrecursion=False, donly=[]):
     This is main function convert new syntax to orginal syntax
 
     :param content: Code with new syntax
-    :param spattern: Dictionary containing regular expression for new syntax
-    :param tpattern: Dictionary containing pattern of original syntax
+    :param yaml_details: Details extracted from yaml files
+    :param isrecursion: To check recursion call or not
+    :parm donly: parts that should only converted(used during part calling)
+    :type donly: list
+    :type isrecursion: bool
     :type content: str
-    :type spattern: dic
-    :type tpattern: dic
+    :type yaml_details: tuple
     :return: Return code with original syntax
     :rtype: str
     """
