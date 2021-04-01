@@ -191,9 +191,9 @@ def main(yaml_details, content, isrecursion=False, donly=[]):
     """
     (match_options, trans_options), tpattern = yaml_details
     lopcount = 0
+    if isrecursion:
+    	match_options = {part:match_options[part] for part in donly}
     while 1:
-        if isrecursion:
-        	match_options = {part:match_options[part] for part in donly}
         empty, partmatches, tknmatches = matching(content, match_options, isrecursion)
         if empty:  # Break when no match found
             break
