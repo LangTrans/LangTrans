@@ -1,10 +1,25 @@
-from re import compile as comp, MULTILINE, sub
+from re import compile, MULTILINE, sub, error as rerror
 from functools import partial
 """
 LangTrans
 ---------
 To customize syntax of any programming language.
 """
+
+def comp(regex):
+    """
+    Compile regular expression
+
+    :param regex: Regular Expression
+    :type regex: str
+    """
+    try:
+        return compile(regex,MULTILINE)
+    except rerror as err:
+        print("Invalid regex")
+        print("Error:",err)
+        print("Regex:",regex)
+        raise err
 
 def check_collections(calls, collections):
     """
@@ -54,16 +69,20 @@ def tknoptions(sdef, collections):
                 if opn == "eachline":
                     opns.update({"eachline": data})
                 elif opn == "replace":
-                    opns.update(
-                        {
-                            "replace": [
-                                (comp(repregex[0]), repregex[1])
-                                if 1 < len(repregex)
-                                else (comp(repregex[0]), "")
-                                for repregex in data
-                            ]
-                        }
-                    )
+                    try:
+                        opns.update(
+                            {
+                                "replace": [
+                                    (comp(repregex[0]), repregex[1])
+                                    if 1 < len(repregex)
+                                    else (comp(repregex[0]), "")
+                                    for repregex in data
+                                ]
+                            }
+                        )
+                    except rerror as err:
+                            print(f"Location: Replace option of '{tkname}'")
+                            raise err
                 elif opn == "call":
                     opns.update({"call": check_collections(data, collections)})
             trans_options[tkname] = opns
@@ -122,16 +141,21 @@ def extract(spattern):
     trans_options = dict()
     match_options = dict()
     for part, sdef in spattern.items():
-        match_options.update(
-            {
-                part: (
-                    comp(sdef["regex"], MULTILINE), # Compiled regex
-                    sdef["tokens"], # Token_names
-                    ("global" not in sdef or sdef["global"]), # Checking Global
-                )
-            }
-        )
-        trans_options.update({part: tknoptions(sdef, collections)})
+        try:
+            match_options.update(
+                {
+                    part: (
+                        comp(sdef["regex"]), # Compiled regex
+                        sdef["tokens"], # Token_names
+                        ("global" not in sdef or sdef["global"]), # Checking Global
+                    )
+                }
+            )
+            trans_options.update({part: tknoptions(sdef, collections)})
+        except rerror: # Invalid Regex Error
+            print("Part:",part)
+            exit()
+
     return after, (match_options, trans_options)
 
 def matching(content, match_options, isrecursion):
@@ -343,53 +367,67 @@ if __name__ == "__main__":
         print("Error: Insufficient number of arguments")
         exit()
     try:
-	    if "-c" in argv:  # Combine into ltz
-	        save(argv, 2)
-	        exit()
-	    if "-f" in argv:  # Use ltz
-	        argv.remove("-f")
-	        from pickle import load
-	        try:
-	            yaml_details = load(open(argv[-1] + ".ltz", "rb"))
-	        except Exception:
-	            yaml_details = save(argv, 3)
-	    elif "-d" in argv:
-	        doc(argv[-1])
-	        exit()
-	    else:
-	        yaml_details = grab(argv, 3)
-	    yes = "-y" in argv  # To run after command automatically
-	    if yes:
-	        argv.remove("-y")
-	    after, yaml_details = yaml_details
-	    content = open(argv[1]).read()
-	    re_main = partial(main, yaml_details=yaml_details, isrecursion=True)
-	    targetcode = main(yaml_details, content)
-	    open(argv[2], "w").write(targetcode)
-	    print(targetcode)
-	    # For after command in settings
-	    if after:  # Not None
-	        from os import system
-	        if isinstance(after, list):  # For multiple commands
-	            after = " && ".join(after)
-	        elif isinstance(after, dict):  # After command for different OS
-	            from platform import system
-	            osname = system().lower()  # Current os name
-	            if osname not in after:
-	                print(f"No after command for {osname}. OS name eg. linux, windows")
-	                exit()
-	            after = after[osname]
-	        if not isinstance(after, str):
-	            print("Invalid after command")
-	            exit()
-	        # To use address of source and target file in 'after' command
-	        for var, val in zip(["$target", "$source"], [argv[2], argv[1]]):
-	            after = after.replace(var, val)
-	        if yes:
-	            system(after)
-	            exit()
-	        inp = input(f"\nEnter to run and n to exit\nCommand:{after}\n")
-	        if inp.lower() != "n":
-	            system(after)
+        yes = "-y" in argv  # To run after command automatically
+        no = "-n" in argv   # To exit without executing after command
+        verbose = "-v" in argv # Verbose Mode
+
+        if yes:
+            argv.remove("-y")
+        elif no:
+            argv.remove("-n")
+        if verbose:
+            argv.remove("-v")
+
+        if "-c" in argv:  # Combine into ltz
+            save(argv, 2)
+            exit()
+        elif "-f" in argv:  # Use ltz
+            argv.remove("-f")
+            from pickle import load
+            try:
+                yaml_details = load(open(argv[-1] + ".ltz", "rb"))
+            except Exception:
+                yaml_details = save(argv, 3)
+        elif "-d" in argv:
+            doc(argv[-1])
+            exit()
+        else:
+            yaml_details = grab(argv, 3)
+
+        after, yaml_details = yaml_details
+        content = open(argv[1]).read()
+        re_main = partial(main, yaml_details=yaml_details, isrecursion=True)
+        targetcode = main(yaml_details, content)
+        print("Compiled successfully\n")
+        open(argv[2], "w").write(targetcode)
+        if verbose:
+            print(targetcode)
+        print("\nSaved as",argv[2])
+        if no: # Exit without executing after command
+            exit()
+        # For after command in settings
+        if after:  # Not None
+            from os import system
+            if isinstance(after, list):  # For multiple commands
+                after = " && ".join(after)
+            elif isinstance(after, dict):  # After command for different OS
+                from platform import system
+                osname = system().lower()  # Current os name
+                if osname not in after:
+                    print(f"No after command for {osname}. OS name eg. linux, windows")
+                    exit()
+                after = after[osname]
+            if not isinstance(after, str):
+                print("Invalid after command")
+                exit()
+            # To use address of source and target file in 'after' command
+            for var, val in zip(["$target", "$source"], [argv[2], argv[1]]):
+                after = after.replace(var, val)
+            if yes:
+                system(after)
+                exit()
+            inp = input(f"\nEnter to run and n to exit\nCommand:{after}\n")
+            if inp.lower() != "n":
+                system(after)
     except Exception as err:
         print("Error:", err)
