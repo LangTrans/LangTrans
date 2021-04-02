@@ -14,7 +14,7 @@ def comp(regex):
     :type regex: str
     """
     try:
-        return compile(regex,MULTILINE)
+    	return compile(regex,MULTILINE)
     except rerror as err:
         print("Invalid regex")
         print("Error:",err)
@@ -155,7 +155,11 @@ def extract(spattern):
         except rerror: # Invalid Regex Error
             print("Part:",part)
             exit()
-
+        except KeyError as err: # For part without regex or tokens
+        	print("Invalid part")
+        	print(err,"not found in",part)
+        	exit()
+        	
     return after, (match_options, trans_options)
 
 def matching(content, match_options, isrecursion):
@@ -255,9 +259,9 @@ def main(yaml_details, content, isrecursion=False, donly=[]):
 	                            ]
 	                        )
                     tknmatch[tkname] = match
-                    # Replacing token names with its value
+                    							# Replacing token names with its value
                 temp_pattern = addvar(tknmatch, addvar(tknmatch, temp_pattern))
-                # Token values added from other tokens
+                				# Token values added from other tokens
                 if next_optns:  # Next Part option
                     temp_pattern = re_main(content=temp_pattern, donly=next_optns)
                 content = content.replace(partmatch, temp_pattern)
@@ -275,9 +279,18 @@ def grab(argv, l):
     :rtype:  (str or list or dic or None), tuple(dic,dic)
     """
     from yaml import load, SafeLoader
+    from yaml.scanner import ScannerError
 
-    spattern = load(open(argv[l] + ".yaml").read(), Loader=SafeLoader)  # Source
-    tpattern = load(open(argv[l + 1] + ".yaml").read(), Loader=SafeLoader)  # Target
+    try:
+    	file = argv[l]+".yaml"
+    	spattern = load(open(file).read(), Loader=SafeLoader)
+    	file = argv[l+1]+".yaml"
+    	tpattern = load(open(file).read(), Loader=SafeLoader)
+    except ScannerError as err: # Error message for Invalid Yaml File
+        print(file,'is invalid')
+        print("Error:",err.problem,err.context)
+        print(err.problem_mark.get_snippet())
+        exit()
     after, rest = extract(spattern)
     return after, (rest, tpattern)
 
@@ -392,7 +405,7 @@ if __name__ == "__main__":
             doc(argv[-1])
             exit()
         else:
-            yaml_details = grab(argv, 3)
+        	yaml_details = grab(argv, 3)
 
         after, yaml_details = yaml_details
         content = open(argv[1]).read()
