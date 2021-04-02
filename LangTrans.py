@@ -52,15 +52,11 @@ def tknoptions(sdef, collections):
     :rtype: dic,list
     """
     trans_options = dict()
-    nsdef = dict()
-    for tkns, opts in sdef.items():  # Spliting Token options
+    for tkns in tuple(sdef):  # Spliting Token options
         if "," in tkns:
+            opts = sdef.pop(tkns)
             for tkn in tkns.split(","):
-                nsdef[tkn] = opts
-        else:
-            nsdef[tkns] = opts
-    sdef = nsdef
-    del nsdef
+                sdef[tkn] = opts
     for tkname in sdef["tokens"]:
         if tkname in sdef:
             opns = dict()
@@ -113,11 +109,11 @@ def extract(spattern):
     :rtype: (None|str|list|dic),tuple(dic,dic)
     """
     # Settings-----------------------------------------------------
-    
-    after = None
     from os.path import dirname
+
     # Importing builtin variables
     variables = grab_var(dirname(__file__) + "\\builtin")
+    after = None
     if "settings" in spattern:
         setting = spattern["settings"]
         del spattern["settings"]
@@ -126,40 +122,38 @@ def extract(spattern):
             variables.update(grab_var(setting["varfile"]))
         if "variables" in setting: # Adding variables in settings
             variables.update(setting["variables"])
-    try:
-	    for part, sdef in spattern.items():
-	        if part[0] == "_":  # For two regex extract with one pattern
-	            spattern[part]["tokens"] = spattern[part[2:]]["tokens"]
-	    	# Replacing variable name with its value
-	        spattern[part]["regex"] = addvar(variables, sdef["regex"])# For regex in part
-	        for tkn in sdef["tokens"]: # For replace option in token options
-	            if tkn in sdef and "replace" in sdef[tkn]:
-	                for p, replaces in enumerate(sdef[tkn]["replace"]):
-	                    spattern[part][tkn]["replace"][p][0] = addvar(variables, replaces[0])
-    except KeyError as err: # For part without regex or tokens
-    	print("Error:",err,"not found in",part)
-    	exit()
-    del variables
-    collections = setting["collections"] if "collections" in setting else dict()
-    # --------------------------------------------------------------
+        collections = setting["collections"] if "collections" in setting else dict()
+    else:
+    	collections = dict()
     trans_options = dict()
     match_options = dict()
-    for part, sdef in spattern.items():
-        try:
+    try:
+        for part, sdef in spattern.items():
+            # For two regex extract with one pattern
+            tkns = spattern[part[2:]]["tokens"] if (part[0] == "_" and part[2:] in spattern) else sdef["tokens"]
+            # Replacing variable name with its value-------------------------------
+            regex = addvar(variables, sdef["regex"])# For regex in part
+            for tkn in tkns: # For replace option in token options
+                if tkn in sdef and "replace" in sdef[tkn]:
+                    for p, replaces in enumerate(sdef[tkn]["replace"]):
+                        sdef[tkn]["replace"][p][0] = addvar(variables, replaces[0])
+            #----------------------------------------------------------------------
             match_options.update(
                 {
                     part: (
-                        comp(sdef["regex"]), # Compiled regex
-                        sdef["tokens"], # Token_names
+                        comp(regex), # Compiled regex
+                        tkns, # Token_names
                         ("global" not in sdef or sdef["global"]), # Checking Global
                     )
                 }
             )
             trans_options.update({part: tknoptions(sdef, collections)})
-        except rerror: # Invalid Regex Error
-            print("Part:",part)
-            exit()
-        	
+    except rerror: # Invalid Regex Error
+        print("Part:",part)
+        exit()
+    except KeyError as err: # For part without regex or tokens
+    	print("Error:",err,"not found in",part)
+    	exit()
     return after, (match_options, trans_options)
 
 def matching(content, match_options, isrecursion):
@@ -380,9 +374,10 @@ if __name__ == "__main__":
         print("Error: Insufficient number of arguments")
         exit()
     try:
+    	#Terminal Options-----------------------------------------------
         yes = "-y" in argv  # To run after command automatically
         no = "-n" in argv   # To exit without executing after command
-        verbose = "-v" in argv # Verbose Mode
+        verbose = "-v" in argv # Verbose Mode - print source code
 
         if yes:
             argv.remove("-y")
@@ -391,7 +386,7 @@ if __name__ == "__main__":
         if verbose:
             argv.remove("-v")
 
-        if "-c" in argv:  # Combine into ltz
+        if "-c" in argv:  # Compile into ltz
             save(argv, 2)
             exit()
         elif "-f" in argv:  # Use ltz
@@ -406,7 +401,7 @@ if __name__ == "__main__":
             exit()
         else:
         	yaml_details = grab(argv, 3)
-
+       #-----------------------------------------------------------------
         after, yaml_details = yaml_details
         content = open(argv[1]).read()
         re_main = partial(main, yaml_details=yaml_details, isrecursion=True)
