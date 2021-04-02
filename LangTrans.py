@@ -113,30 +113,34 @@ def extract(spattern):
     :rtype: (None|str|list|dic),tuple(dic,dic)
     """
     # Settings-----------------------------------------------------
-    for part in spattern:  # For two regex extract with one pattern
-        if part[0] == "_":
-            spattern[part]["tokens"] = spattern[part[2:]]["tokens"]
+    
     after = None
+    from os.path import dirname
+    # Importing builtin variables
+    variables = grab_var(dirname(__file__) + "\\builtin")
     if "settings" in spattern:
         setting = spattern["settings"]
         del spattern["settings"]
         after = setting.get("after")
-        from os.path import dirname
-        # Importing builtin variables
-        variables = grab_var(dirname(__file__) + "\\builtin")
         if "varfile" in setting: # Importing variables from varfile
             variables.update(grab_var(setting["varfile"]))
         if "variables" in setting: # Adding variables in settings
             variables.update(setting["variables"])
-        if variables: # Replacing variable name with its value
-            for part, sdef in spattern.items():  # For regex in part
-                spattern[part]["regex"] = addvar(variables, sdef["regex"])
-                for tkn in sdef["tokens"]: # For replace option in token options
-                    if tkn in sdef and "replace" in sdef[tkn]:
-                        for p, replaces in enumerate(sdef[tkn]["replace"]):
-                            spattern[part][tkn]["replace"][p][0] = addvar(variables, replaces[0])
-        del variables
-        collections = setting["collections"] if "collections" in setting else dict()
+    try:
+	    for part, sdef in spattern.items():
+	        if part[0] == "_":  # For two regex extract with one pattern
+	            spattern[part]["tokens"] = spattern[part[2:]]["tokens"]
+	    	# Replacing variable name with its value
+	        spattern[part]["regex"] = addvar(variables, sdef["regex"])# For regex in part
+	        for tkn in sdef["tokens"]: # For replace option in token options
+	            if tkn in sdef and "replace" in sdef[tkn]:
+	                for p, replaces in enumerate(sdef[tkn]["replace"]):
+	                    spattern[part][tkn]["replace"][p][0] = addvar(variables, replaces[0])
+    except KeyError as err: # For part without regex or tokens
+    	print("Error:",err,"not found in",part)
+    	exit()
+    del variables
+    collections = setting["collections"] if "collections" in setting else dict()
     # --------------------------------------------------------------
     trans_options = dict()
     match_options = dict()
@@ -155,10 +159,6 @@ def extract(spattern):
         except rerror: # Invalid Regex Error
             print("Part:",part)
             exit()
-        except KeyError as err: # For part without regex or tokens
-        	print("Invalid part")
-        	print(err,"not found in",part)
-        	exit()
         	
     return after, (match_options, trans_options)
 
