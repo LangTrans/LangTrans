@@ -36,9 +36,13 @@ def check_collections(calls, collections):
     narr = []
     for collection in calls:
         if collection.startswith("$"):
-            narr += collections[collection[1:]]
-        else:
-            narr.append(collection)
+            collection=collection[1:]
+            if collection not in collections:
+                print(collection,"not found")
+                continue
+            narr += collections[collection]
+            continue
+        narr.append(collection)
     return narr
 
 def tknoptions(sdef, collections):
@@ -52,16 +56,11 @@ def tknoptions(sdef, collections):
     :rtype: dic,list
     """
     trans_options = dict()
-    for tkns in tuple(sdef):  # Spliting Token options
-        if "," in tkns:
-            opts = sdef.pop(tkns)
-            for tkn in tkns.split(","):
-                sdef[tkn] = opts
-    for tkname in sdef["tokens"]:
-        if tkname in sdef:
+    for tkname,opts in sdef.items():
+        if isinstance(opts, dict):
             opns = dict()
             # Token options
-            for opn, data in sdef[tkname].items():
+            for opn, data in opts.items():
                 if opn == "eachline":
                     opns.update({"eachline": data})
                 elif opn == "replace":
@@ -69,19 +68,26 @@ def tknoptions(sdef, collections):
                         opns.update(
                             {
                                 "replace": [
-                                    (comp(repregex[0]), repregex[1])
-                                    if 1 < len(repregex)
-                                    else (comp(repregex[0]), "")
-                                    for repregex in data
+                                	(comp(reprgx), "") # For removing
+                                	if isinstance(reprgx, str)
+                                	else (comp(reprgx[0]), reprgx[1])
+                                    if len(reprgx)==2
+                                    else (comp(reprgx[0]), "") # For removing
+                                    for reprgx in data
                                 ]
                             }
                         )
                     except rerror as err:
-                            print(f"Location: Replace option of '{tkname}'")
-                            raise err
+                        print(f"Location: Replace option of '{tkname}'")
+                        raise err
                 elif opn == "call":
                     opns.update({"call": check_collections(data, collections)})
-            trans_options[tkname] = opns
+            if "," in tkname: # Spliting Token options
+            	for tk in tkname.split(","):
+            		trans_options[tk] = opns
+            else:
+            	trans_options[tkname] = opns
+
     return trans_options, (check_collections(sdef["next"], collections) if "next" in sdef else [])
 
 def addvar(variables, rv):
@@ -125,6 +131,7 @@ def extract(spattern):
         collections = setting["collections"] if "collections" in setting else dict()
     else:
     	collections = dict()
+
     trans_options = dict()
     match_options = dict()
     try:
@@ -133,10 +140,10 @@ def extract(spattern):
             tkns = spattern[part[2:]]["tokens"] if (part[0] == "_" and part[2:] in spattern) else sdef["tokens"]
             # Replacing variable name with its value-------------------------------
             regex = addvar(variables, sdef["regex"])# For regex in part
-            for tkn in tkns: # For replace option in token options
-                if tkn in sdef and "replace" in sdef[tkn]:
-                    for p, replaces in enumerate(sdef[tkn]["replace"]):
-                        sdef[tkn]["replace"][p][0] = addvar(variables, replaces[0])
+            for opt in sdef.values(): 
+                if isinstance(opt, dict) and "replace" in opt: # For replace option in token options
+                    for replace in opt["replace"]:
+                        replace[0] = addvar(variables, replace[0])
             #----------------------------------------------------------------------
             match_options.update(
                 {
@@ -148,6 +155,7 @@ def extract(spattern):
                 }
             )
             trans_options.update({part: tknoptions(sdef, collections)})
+
     except rerror: # Invalid Regex Error
         print("Part:",part)
         exit()
@@ -304,29 +312,11 @@ def grab_var(file):
         v = load(open(file + ".yaml").read(), Loader=SafeLoader)
         if v != None:
             variables.update(v)
-    except FileNotFoundError:
-        print(f"varfile({file}.yaml) not found\n")
+    except FileNotFoundError as err:
+        print(f"varfile({err.filename}) not found\n")
     except ValueError:
         print(f"Invalid varfile({file}.yaml)\n")
     return variables
-
-def save(argv, l):
-    """
-    To save yaml details into single file
-
-    :param argv: array of arguments
-    :param l: location of argument needed
-    :type argv: list
-    :type l: int
-    :return: yaml details
-    :rtype: tuple
-    """
-    from pickle import dump, HIGHEST_PROTOCOL
-    argv[-1] += ".ltz"
-    yaml_details = grab(argv, l)
-    dump(yaml_details, open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL)
-    print("File saved as", argv[-1])
-    return yaml_details
 
 def doc(file):
     """
@@ -387,30 +377,34 @@ if __name__ == "__main__":
             argv.remove("-v")
 
         if "-c" in argv:  # Compile into ltz
-            save(argv, 2)
+            from pickle import dump, HIGHEST_PROTOCOL
+            argv[-1] += ".ltz"
+            dump(grab(argv, 2), open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL)
+            print("File saved as", argv[-1])
             exit()
-        elif "-f" in argv:  # Use ltz
+        elif "-f" in argv:  # Run compiled ltz
             argv.remove("-f")
             from pickle import load
             try:
                 yaml_details = load(open(argv[-1] + ".ltz", "rb"))
-            except Exception:
-                yaml_details = save(argv, 3)
+            except FileNotFoundError as err:
+                print(err.filename,"not found")
+                exit()
         elif "-d" in argv:
             doc(argv[-1])
             exit()
         else:
         	yaml_details = grab(argv, 3)
-       #-----------------------------------------------------------------
+       #-----------------------------------------------------------------		
         after, yaml_details = yaml_details
         content = open(argv[1]).read()
         re_main = partial(main, yaml_details=yaml_details, isrecursion=True)
         targetcode = main(yaml_details, content)
-        print("Compiled successfully\n")
+        print("Compiled successfully")
         open(argv[2], "w").write(targetcode)
+        print("Saved as",argv[2])
         if verbose:
             print(targetcode)
-        print("\nSaved as",argv[2])
         if no: # Exit without executing after command
             exit()
         # For after command in settings
