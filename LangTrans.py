@@ -1,7 +1,7 @@
 from re import sub,compile, MULTILINE, error as rerror
 from os import system
 from os.path import dirname
-from sys import argv
+from sys import argv, exit
 from functools import partial
 
 """
@@ -76,9 +76,9 @@ def tknoptions(sdef, collections):
                                 	(comp(reprgx), "") # For removing
                                 	if isinstance(reprgx, str)
                                 	else (comp(reprgx[0]), reprgx[1]) # For replacing
-                                    if len(reprgx)==2
-                                    else (comp(reprgx[0]), "") # For removing
-                                    for reprgx in data
+                                        if len(reprgx)==2
+                                        else (comp(reprgx[0]), "") # For removing
+                                        for reprgx in data
                                 ]
                             }
                         )
@@ -221,16 +221,14 @@ def convert(yaml_details, content, isrecursion=False, donly=[]):
     lopcount = 0
     if isrecursion:
     	match_options = {part:match_options[part] for part in donly}
-    while 1:
+    while True:
         empty, partmatches, tknmatches = matching(content, match_options, isrecursion)
         if empty:  # Break when no match found
             break
         elif lopcount > 100:
-            content += (
-                "\n\nError:\tLoop Limit Exceded!\n\t"
-                + f"Bug Locations: {list(part for part,matches in partmatches.items() if matches)}"
-            )
-            break
+            print("Error: Loop Limit Exceded")
+            print("Bug Locations:",[part for part,matches in partmatches.items() if matches])
+            exit()
         lopcount += 1
         for part, tknmatchez in tknmatches.items():
             pattern = tpattern[part]
@@ -298,7 +296,6 @@ def grab(argv, l):
     			else:
     				print("Error:",bpart,"for",part,"not found")
     				exit()
-
     			if bpart in tpattern: # Template checking
     				tpattern[part]=tpattern[bpart]
     				continue
@@ -306,6 +303,16 @@ def grab(argv, l):
     		print("Error: Template for",part,"not found")
     		exit()
     after, rest = extract(spattern)
+    if after:
+        if isinstance(after, dict):  # After command for different OS
+            from platform import system as systm
+            osname = systm().lower()  # Current os name
+            if osname not in after:
+                print(f"Error: No after command for {osname}. OS name eg. linux, windows")
+                exit()
+            after = after[osname]
+        if isinstance(after, list):  # For multiple commands
+            after = " && ".join(after)
     return after, (rest, tpattern)
 
 def grab_var(file):
@@ -417,18 +424,6 @@ if __name__ == "__main__":
             print(targetcode)
         # For after command in settings
         if not(no) and after:  # Not None
-            if isinstance(after, list):  # For multiple commands
-                after = " && ".join(after)
-            elif isinstance(after, dict):  # After command for different OS
-                from platform import system
-                osname = system().lower()  # Current os name
-                if osname not in after:
-                    print(f"Error: No after command for {osname}. OS name eg. linux, windows")
-                    exit()
-                after = after[osname]
-            if not isinstance(after, str):
-                print("Error: Invalid after command")
-                exit()
             # To use address of source and target file in 'after' command
             for var, val in zip(["$target", "$source"], [argv[2], argv[1]]):
                 after = after.replace(var, val)
