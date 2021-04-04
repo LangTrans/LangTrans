@@ -415,8 +415,6 @@ if __name__ == "__main__":
         print("Saved as",argv[2])
         if verbose:
             print(targetcode)
-        if : # Exit without executing after command
-            exit()
         # For after command in settings
         if not(no) and after:  # Not None
             if isinstance(after, list):  # For multiple commands
