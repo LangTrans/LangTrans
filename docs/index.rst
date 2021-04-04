@@ -140,12 +140,40 @@ Command Line
 
 .. code-block:: console
 
-	langtrans <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>
+	py langtrans.py <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>
 
 | **SourceFileName** - File name of source code written with new syntax
 | **OutputFileName** - File name of source code you want to generate with orginal syntax
 | **SyntaxRepr**     - File name of YAML file for token extraction without extension(.yaml)
 | **PatternRepr**    - File name of YAML file with template of orginal language without extension
+
+**Compile**
+
+.. code-block:: console
+
+	py langtrans.py -c <SyntaxRepr> <PatternRepr> <compfile>
+
+| **compfile** - Name of compiled file(without extension)
+| filename.ltz will be generated.
+
+**Run**
+
+.. code-block:: console
+
+	py langtrans.py -f <SoureFileName> <OutputFileName> <compfile>
+
+**Docs of SyntaxRepr**
+
+.. code-block:: console
+
+	py langtrans.py -d <SyntaxRepr>
+
+**Other Options**
+
+| **-h** - For help
+| **-v** - Verbose mode
+| **-y** - To execute 'after' command automatically
+| **-n** - To exit without executing 'after' command
 
 Downloads
 =========
