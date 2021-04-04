@@ -209,7 +209,7 @@ def convert(yaml_details, content, isrecursion=False, donly=[]):
     :param content: Code with new syntax
     :param yaml_details: Details extracted from yaml files
     :param isrecursion: To check recursion call or not
-    :parm donly: parts that should only converted(used during part calling)
+    :param donly: parts that should only converted(used during part calling)
     :type donly: list
     :type isrecursion: bool
     :type content: str
