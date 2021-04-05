@@ -73,12 +73,12 @@ def tknoptions(sdef, collections):
                         opns.update(
                             {
                                 "replace": [
-                                	(comp(reprgx), "") # For removing
-                                	if isinstance(reprgx, str)
-                                	else (comp(reprgx[0]), reprgx[1]) # For replacing
-                                        if len(reprgx)==2
-                                        else (comp(reprgx[0]), "") # For removing
-                                        for reprgx in data
+	                            	(comp(reprgx), "") # For removing
+	                            	if isinstance(reprgx, str)
+	                            	else (comp(reprgx[0]), reprgx[1]) # For replacing
+	                                if len(reprgx)==2
+	                                else (comp(reprgx[0]), "") # For removing
+	                                for reprgx in data
                                 ]
                             }
                         )
@@ -127,6 +127,15 @@ def extract(spattern):
         setting = spattern["settings"]
         del spattern["settings"]
         after = setting.get("after")
+        if isinstance(after, dict):  # After command for different OS
+            from platform import system as systm
+            osname = systm().lower()  # Current os name
+            if osname not in after:
+                print(f"Error: No after command for {osname}. OS name eg. linux, windows")
+                exit()
+            after = after[osname]
+        if isinstance(after, list):  # For multiple commands
+            after = " && ".join(after)
         if "varfile" in setting: # Importing variables from varfile
             variables.update(grab_var(setting["varfile"]))
         if "variables" in setting: # Adding variables in settings
@@ -179,7 +188,7 @@ def matching(content, match_options, isrecursion):
     partmatches = dict()
     empty = True
     for part, (pattern, tknames, global_chk) in match_options.items():
-        if not (isrecursion or global_chk): # (not isrecursion) and (not global_chk)
+        if not (global_chk or isrecursion): # (not global_chk) and (not isrecursion)
             continue
         # Part matching
         partmatches[part] = [i.group() for i in pattern.finditer(content)]
@@ -263,7 +272,7 @@ def convert(yaml_details, content, isrecursion=False, donly=[]):
                 content = content.replace(partmatch, temp_pattern)
     return content
 
-def grab(argv, l):
+def grab(source, target):
     """
     To get details from yaml files
 
@@ -278,9 +287,9 @@ def grab(argv, l):
     from yaml.scanner import ScannerError
     
     try:
-    	file = argv[l]+".yaml"
+    	file = source+".yaml"
     	spattern = load(open(file).read(), Loader=SafeLoader)
-    	file = argv[l+1]+".yaml"
+    	file = target+".yaml"
     	tpattern = load(open(file).read(), Loader=SafeLoader)
     except ScannerError as err: # Error message for Invalid Yaml File
         print("Error:",file,'is invalid')
@@ -303,16 +312,6 @@ def grab(argv, l):
     		print("Error: Template for",part,"not found")
     		exit()
     after, rest = extract(spattern)
-    if after:
-        if isinstance(after, dict):  # After command for different OS
-            from platform import system as systm
-            osname = systm().lower()  # Current os name
-            if osname not in after:
-                print(f"Error: No after command for {osname}. OS name eg. linux, windows")
-                exit()
-            after = after[osname]
-        if isinstance(after, list):  # For multiple commands
-            after = " && ".join(after)
     return after, (rest, tpattern)
 
 def grab_var(file):
@@ -396,7 +395,8 @@ if __name__ == "__main__":
         if "-c" in argv:  # Compile into ltz
             from pickle import dump, HIGHEST_PROTOCOL
             argv[-1] += ".ltz"
-            dump(grab(argv, 2), open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL)
+            dump(grab(argv[2], argv[3]), open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL)
+            print("Compiled successfully")
             print("File saved as", argv[-1])
             exit()
         elif "-f" in argv:  # Run compiled ltz
@@ -411,13 +411,12 @@ if __name__ == "__main__":
             doc(argv[-1])
             exit()
         else:
-            yaml_details = grab(argv, 3)
+            yaml_details = grab(argv[3], argv[4])
         #-------------------------------------------------------------------
         after, yaml_details = yaml_details
         content = open(argv[1]).read()
         re_convert = partial(convert,yaml_details=yaml_details,isrecursion=True)
         targetcode = convert(yaml_details,content)
-        print("Compiled successfully")
         open(argv[2], "w").write(targetcode)
         print("Saved as",argv[2])
         if verbose:
@@ -425,12 +424,13 @@ if __name__ == "__main__":
         # For after command in settings
         if not(no) and after:  # Not None
             # To use address of source and target file in 'after' command
-            for var, val in zip(["$target", "$source"], [argv[2], argv[1]]):
+            for var, val in zip(("$target", "$source","$current"),(argv[2], argv[1],dirname(__file__))):
                 after = after.replace(var, val)
             if yes:
                 system(after)
                 exit()
-            inp = input(f"\nEnter to run and n to exit\nCommand:{after}\n")
+            print("\nEnter to run and n to exit\nCommand:",after)
+            inp = input()
             if inp.lower() != "n":
                 system(after)
     except Exception as err:
