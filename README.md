@@ -10,42 +10,39 @@ It helps you to customize the syntax of any programming language<br>
 It converts customized syntax to original syntax.<br>
 It uses regular expression but it supports nesting(called part calling).
 ### Example
-##### Customized Syntax
+##### Customized Syntax of Python
 ```py
+#Print
 p"Hello World"
+# Anonymous function
 inc = (x) => x+1
+# Lambda function
 twice(x) = 2*x
-add(x,y) = x+y
-print(![inc => 1..6])
-print|inc|inc(1)
+# Single Line try-except
 try inc("1") Exception print("Error:",err)
-test ="test"
-=test.replace("test","")
+# Print Done if x is defined other wise Failed
 print((x||True)?"Done":"Failed")
+# Single Line if and check x defined or not
 print('x is not defined') if !x
-1 -> inc -> print
+# Pipe Syntax
+1 -> inc
+|> print
+# Arithmetic operations with functions 
 print((inc+twice)(3))
-```
+#Scope syntax work like in javascript
+#scope1#
+print("Scope1")
+print("Done")
 
-##### Orginal Syntax
-```python
-print("Hello World")
-inc = lambda x: x+1
-twice = lambda x:2*x
-add = lambda x,y:x+y
-print(list(map(inc,range(1,6+1))))
-print(inc(inc(1)))
-try:
-  inc("1")
-except Exception as err:
-  print("Error:",err)
-test ="test"
-test=test.replace("test","")
-print("Done" if (x if 'x' in locals() else True) else "Failed")
-if 'x' not in locals():
-  print('x is not defined')
-print(inc(1))
-print(inc(3)+twice(3))
+#scope2#
+print("scope2")
+print("Done")
+
+#PEP 359 - The "make" statement 
+make type name(arg):
+	x = 1
+	y = 3
+
 ```
 
 ##### Customized Syntax of LISP
@@ -54,15 +51,6 @@ print(inc(3)+twice(3))
 func printhis(s):
 	format(t,s)
 printhis("Customized!")
-```
-
-##### Original Syntax 
-
-```lisp
-(defun printhis (s)
-	(format t s)
-)
-(printhis "Customized!")
 ```
 
 ### Customize with LangTrans
