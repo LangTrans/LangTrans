@@ -299,7 +299,7 @@ def grab(source, target):
     for part in spattern:  # Template checking
     	if not(part in tpattern or part=="settings"):
     		if part.startswith("_"):# For parts with same pattern
-    			bpart = part[:2] #Base part
+    			bpart = part[2:] #Base part
     			if bpart in spattern:# Since template is same, tokens also same
     				spattern[part]['tokens']=spattern[bpart]['tokens']
     			else:
