@@ -1,1 +1,6 @@
 bracket: \((.+)\) # Get content inside bracket
+#Indentation
+ind: (\n(?:((?:\t|\s)+)).*(?:(?:\n\
+ent: .*)*\n*)*)
+
+tab: ^((?:\t|\s)*) # For tab
