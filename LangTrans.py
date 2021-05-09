@@ -16,13 +16,16 @@ def comp(regex):
 
     :param regex: Regular Expression
     :type regex: str
-    """
-    try:
-    	return compile(regex,MULTILINE)
+    """         # To emulate tokens(in parsers)
+    regex = regex.replace(" ",r"\s+")\
+                 .replace("~",r"\s*")
+    try:                    #re.MULTILINE=8
+    	return compile(regex,8)
     except rerror as err:
         print("Error:","Invalid regex")
         print(err.msg)
-        print("Regex:",regex)
+        print("Regex:",regex.replace("\n",r"\n")\
+                            .replace("\t",r"\t"))
         print(" "*(err.pos+7)+"^")
         raise err
 
