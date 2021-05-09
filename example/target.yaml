@@ -1,41 +1,36 @@
-function: "(<func_name><argument>)\n"
-arithematic: (<operator> <num1> <num2>)
-arithematic1: (<inside>)
-assignment: (setq <var_name> <value>)
-const_var: (defconstant <var_name> <value>)
-equality: (= <value1> <value2>)
-equality_not: (/= <value1> <value2>)
-gl: (<operator> <value1> <value2>)<end>
-andor: (<operator> <value1> <value2>)
-not: (not <value1>)
-cond: (cond (<bool><statements>))
-cond_else: "(cond (<bool><statements>)\n(<estatements>)\n)"
-if: "(if <bool>(<statements>))\n"
-if_else: (if <bool><statements><estatements>)
-when: (when <bool><statements>)
-case: "\n\t(<value> <statements>)"
-switch: "(case <exp>\n<statements>)"
-loop: (loop<statements>)
-for_loop: |
-    (loop for <var_name> in <list> do
-      <statements>)
-for_range: |
-    (loop for <var_name> from <start> to <end> do
-      <tab><statements><tab>)
-do: |
-    (do (<statements>)
-        (<bool><return>)
-        <exp>)
-dotimes: (dotimes (<var_name> <value>)<statements>)
-do_list: (dolist (<var_name> '<list>)<statements>)
-function_header: (defun <func_name> (<args>)<statements>)
-return: (return-from <rval>)
-restval: "&rest <val>\\)"
-opval: "&optional <val>\\)"
-lambda: |
-    (lambda (<args>)
-      <statement>)
-arg: <args>
-inc: (incf <var> <num>)
-dec: (decf <var> <num>)
-mod: (mod <val1> <val2>)
+pipe: <tab><f1>(<f2>)
+arrow_fun: "<name> = lambda <args>:<statement>"
+arrow: "lambda <arg>: <statement>"
+fun_operation: <funs>
+arrow2list: map(<fun>,<list>)
+arrow_multline: lambda <args>:exec("""<statement>""")
+print: <tab>print(<str>)
+fun: def <name>
+single_try: |-
+  <tab>try:
+  <tab>  <try_state>
+  <tab>except <err> as err:
+  <tab>  <except_state>
+itself: <tab><var>=<var>.<rest>
+ternary: <start><tru> if <bol> else <fals><end>
+condition: |-
+  <tab>if <bol>:
+  <tab>  <name>(<args>)
+notdefined: <var> if '<var>' in locals() else <value>
+range: <comma>range(<start>,<end>+1)
+jrange: range(<start>,<end>+1,<jump>)
+listrange: list(<inside>)
+chk_defined: "'<var>' not in locals()"
+multiline_flow:  -><statements>
+flow: <tab><fun>(<arg>) ->
+endflow: <tab><fun>(<arg>)
+scope: |
+  <tab>def <name>():
+  <statement>
+  <tab><name>()
+make: |
+  <tab>def <name>():<tab2><block><tab2>return locals()
+  <tab><name> = <callable>("<name>", (<tuple>), <name>())
+make_dict: |
+  <tab>def <name>():<tab2><block><tab2>return locals()
+  <tab><name> = <name>()

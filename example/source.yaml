@@ -1,149 +1,184 @@
-comment:
-  regex: "#(.+?)$"
-  tokens: [comment]
-multiline:
-  regex: ~(.+?)$
-  tokens: [statement]
-function_header:
-  regex: func <func>\((.*)\):<i1>4<i2>$
-  tokens: [func_name,args,statements]
-  args:
-    call: [arg]
-function:
-  regex: "<func>\\((.*)\\)"
-  tokens: [func_name,argument]
-  argument:
-    replace: [["^(.+?)$"," \\1"]]
-    call: [arg]
-const_var:
-  regex: const <var>\s*=\s*(?!\s)(.+)$
-  tokens: [var_name,value]
-equality:
-  regex: <varof>==<varof>
-  tokens: [value1,value2]
-equality_not:
-  regex: <varof>!=<varof>
-  tokens: [value1,value2]
-gl:
-  regex: <varof>([<>]=*)([^:]+)(:*)
-  tokens: [value1,operator,value2,end]
-loop:
-  regex: loop\(((?:(?:\n\t+?.*)+\n*)+)\)
-  tokens: [statements]
-inc:
-  regex: <var>\+=<var>
-  tokens: [var,num]
-dec:
-  regex: <var>-=<var>
-  tokens: [var,num]
-assignment:
-  regex: <var>\s*=\s*(?!\s)(?!~)(.+)$
-  tokens: [var_name,value]
-arithematic:
-  regex: \(<varof> (<op>) <varof>\)
-  tokens: [num1,operator,num2]
-_1arithematic:
-  regex: (<opn>) (<op>) <varof>
-_2arithematic:
-  regex: <varof> (<op>) (<opn>)
-_3arithematic:
-  regex: (<opn>) (<op>) (<opn>)
-_4arithematic:
-  regex: \((<opn>) (<op>) <varof>\)
-_5arithematic:
-  regex: \(<varof> (<op>) (<opn>)\)
-_6arithematic:
-  regex: \((<opn>) (<op>) (<opn>)\)
-arithematic1:
-  regex: \(\((.+)\)\)
-  tokens: [inside]
-_7arithematic:
-  regex: <varof> (<op>) <varof>
-andor:
-  regex: <varof> (and|or) <varof>
-  tokens: [value1,operator,value2]
-not:
-  regex: not <varof>
-  tokens: [value1]
-cond_else:
-  regex: cond (.+):<i1>3<i2>\nelse:<i1>5<i2>
-  tokens: [bool,statements,tab,estatements]
-cond:
-  regex: cond (.+):<i1>3<i2>
-  tokens: [bool,statements]
-if_else:
-  regex: if (.+):<i1>3<i2>\n\t*else:<i1>5<i2>
-  tokens: [bool,statements,tab,estatements]
-if:
-  regex: if (.+):<i1>3<i2>
-  tokens: [bool,statements]
-when:
-  regex: when (.+):<i1>3<i2>
-  tokens: [bool,statements]
-case:
-  regex: chance (.+):<i1>3<i2>$
-  tokens: [value,statements]
-  statements:
-    replace: [["\n\t"],["\t\n"]]
-switch:
-  regex: switch (.+):<i1>3<i2>$
-  tokens: [exp,statements]
-  statements:
-    replace: [["\t"],["\n\n","\n"]]
-for_loop:
-  regex: for <var> in (.+):<i1>4<i2>$
-  tokens: [var_name,list,statements]
-  statements:
-    replace: [["^\n\t"]]
-for_range:
-  #(\\d+|\\(.+\\))\\.\\.(\\d+|\\(.+\\))
-  regex: "for <var> <var>\\.\\.<var>:<i1>5<i2>$"
-  tokens: [var_name,start,end,statements,tab]
-  #statements:
-    #replace: [["^\n\t"]]
-do:
-  regex: upto (.+) rtn (.+):(.*)<i1>5<i2>$
-  tokens: [bool,return,exp,statements]
-  statements:
-    replace: [["^\n\t"],["\n$"]]
-dotimes:
-  regex: "(\\d+) times for <var>:<i1>4<i2>$"
-  tokens: [value,var_name,statements]
-  statements:
-    replace: [["\n\t$","\n"]]
-do_list:
-  regex: do <var> in (.+):<i1>4<i2>$
-  tokens: [var_name,list,statements]
-restval:
-  regex: "\\*(<var>)\\)"
-  tokens: [val]
-opval:
-  regex: "&op (.+)\\)"
-  tokens: [val]
-lambda:
-  regex: "lambda (.+):(.+)(?:$|\\))"
+scope:
+  regex: <tab>#(<var>)#(<lines>)$
+  tokens: [tab,name,statement]
+  statement:
+    eachline: <tab> <line>
+  doc: Implentation of scope(like in javascript)(Syntax:#name#<statement_in_new_line>)
+
+notdefined:
+  regex: (<var>)\s*\|\|\s*(.+)(?:$|\))
+  tokens: [var,value]
+  doc: if variable is defined return variable otherwise a value(var||value)
+ 
+chk_defined:
+  regex: "!(<var>)"
+  tokens: [var]
+  doc: Return False if variable is not defined (!variable)
+
+
+pipe:
+  regex: <tab>(<var>)\s*<-\s*(.+)$
+  tokens: [tab,f1,f2]
+  f2:
+    call: [pipe]
+  doc: Pass output from one function to another function as input(fun1<-fun2())
+
+print:
+  regex: <tab>p(".*")$
+  tokens: [tab,str]
+  doc: Print string (p"")
+
+arrow_multline:
+  regex: <args>\s*=>\s*{<i1>3<i2>}
   tokens: [args,statement]
-arg:
-  regex: "(?:\n*.+,\n*)+(?:.|\n)+"
-  tokens: [args]
-  global: False
-  args:
-    replace: [[","," "]]
-mod:
-  regex: <var>%<var>
-  tokens: [val1,val2]
-list_element:
-  regex: "<var>\\[(\\d*)\\]"
-  tokens: [var,pos]
+  doc: Multiline arrow function(like in javascript)
+  statement:
+    call: [arrow_multline]
+    replace:
+    - [^(\t)*]
+    - [^\n(\t)*]
+    - [\n\t,\n]
+    - [\\n\\t,\\n]
+    - [\n$]
+    - [\n\t$]
+    - [\t,\\t]
+    - [\n,\\n]
+    - ["'''",\\\''']
+    - ['"""',"'''"]
+
+fun_operation:
+  regex: \((<var>(?:<op><var>)+)\)<args>
+  tokens: [funs,val]
+  funs:
+    replace:
+      - [(<var>),\1(<val>)]
+  doc: To add functions((fun1+fun2)(arg))
+
+arrow2list:
+  regex: (<var>)\s*=>\s*(.+)$
+  tokens: [fun,list]
+  doc: Function to list
+  
+arrow_fun:
+  regex: <tab>(<var>)<bracket>\s*=\s*(.+)$
+  tokens: [tab,name,args,statement]
+  doc: Map function to list (fun=>list)
+
+arrow:
+  regex: \(([^\(]+)\)\s*=>\s*(.+)$
+  tokens: [arg,statement]
+  doc: To create lambda function ((args)=>statement)
+fun:
+  regex: fun\s([A-Za-z_]+)
+  tokens: [name]
+  doc: def into fun
+  
+single_try:
+  regex: <tab>try (.+) (.+) (.+)$
+  tokens: [tab,try_state,err,except_state]
+  doc: Singleline error handling(try statement exception_class statement)
+
+itself:
+  regex: <tab>=(<var>)\.(.+)$
+  tokens: [tab,var,rest]
+  doc: Assign return value to same variable after operation(=variable.function())
+
+ternary:
+  regex: (=\s*|\()(.+)\?(.+):(.+)($|\))
+  tokens: [start,bol,tru,fals,end]
+  doc: Ternary operation(expression?true_statement:false_statement)
+  bol,tru,fals:
+    replace:
+      - [<lstrip>]
+      - [<rstrip>]
+
+condition:
+  regex: <tab>(<var>)<bracket> if (.+)$
+  tokens: [tab,name,args,bol]
+  doc: Call function if expression is true(function() if expression)
+
+#Some Haskell Syntax
+jrange:
+  regex: (\d+),(\d+)\.\.(\d+)
+  tokens: [jump,start,end]
+  doc: Range of numbers with jump (jump,start..end)
+
+range:
+  regex: (,*)(\d+)\.\.(\d+)
+  tokens: [comma,start,end]
+  doc: Range of numbers (start..end)
+  comma:
+    replace:
+      - ["^,",",*"]
+#-----------------------
+listrange:
+  regex: "!\\[(.+)\\]"
+  tokens: [inside]
+  doc: To change into list (![variable/generator/function])
+  inside:
+    call: [jrange,range]
+
+multiline_flow:
+  regex: \n\t*\|>(.+)$
+  tokens: [statements]
+  doc: Multiline piping
+  statements:
+    call: [flow]
+
+flow:
+  regex: <tab><narrow>\s*->\s*<narrow>\s*->
+  tokens: [tab,arg,fun]
+  doc: To write flow pipe(fun1->fun2->fun3)
+  
+endflow:
+  regex: <tab><narrow>\s*->\s*(.+)$
+  tokens: [tab,arg,fun]
+  doc: To write flow pipe(fun1->fun2)
+ 
+make_dict:
+  regex: <tab>make dict (<var>):<tablock>
+  tokens: [tab,name,tab2,block]
+  block:
+    replace:
+      -  [\n\n$,\n]
+      - [\bpass\b,return locals()]
+
+make:
+  regex: <tab>make (<var>) (<var>)<bracket>:<tablock>
+  tokens: [tab,callable,name,tuple,tab2,block]
+  doc: PEP 359 - make statement 
+  block:
+    replace:
+      -  [\n\n$,\n]
+      - [\bpass\b,return locals()]
+  tuple:
+    replace:
+      - [(\w)$,'\1,']
+
+__make:
+  regex: <tab>make (<var>) (<var>)():<tablock>
+  block:
+    replace:
+      -  [\n\n$,\n]
+      - [\bpass\b,return locals()]
 settings:
-  loop: True
-  looplimit: 7
   variables:
-    opn: \(<op> .+ .+\)
-    var: ([A-Za-z0-9_]+)
-    varof: ([A-Za-z0-9_%+\-]+)
-    i1: "(\n(\t+?).*(?:(?:\n\\"
-    i2: .*)*\n*)*)
-    func: "([A-Ba-z_\\-]+)"
-    op: "[+-/*]"
-  #after: clisp $target
+    sptab: (?:(?:\t|\s)+) # Space and Tab
+    tab: ^(<sptab>*) # For tab
+    lstip: "^\\s{1,}" # Remove space in left
+    rstrip: "\\s{1,}$" # Remove space in right
+    var: \w+ # Variable/Function Names
+    bracket: \((.*)\) # Get content inside bracket
+    spvar: \s*\w+\s* # Variable Name with space around
+    args: \((<spvar>(?:,<spvar>)*)\) # To get arguments
+    i1: (\n(?:<sptab>+?).*(?:(?:\n\\ # For multiline
+    i2: .*)*\n*)*) # End multline
+    op: (?:\+|-|\*|\\) #Arthematic Operators
+    narrow: ((?:(?!\s*->).)+) #Not arrow
+    line: (?:\n.+) # For single line
+    lines: <line>+ # For multiple lines
+    # To get indentation level and block of statements
+    tablock: .*(\n<sptab>+)(.+<line>*)
+  author: Name
+  lang: Python
+    

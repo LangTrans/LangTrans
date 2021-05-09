@@ -36,17 +36,24 @@ Syntax
 
 	typeofsynax:
 		regex: regex (regex for token1) <var1> regex
-		tokens: ["token1","token2","token3"]
+		tokens: [token1,token2,token3]
+		unmatch:
+		- regex
 		global: True
+		once: True
 		next: [other_typeofsyntax,$collection_name]
 		token1:
+			unmatch:
+			- regex
 			eachline: extra_here <line> extra_here
-			replace: [[regex,"replacewith"],["regex here"]]
+			replace:
+			- [regex,"replacewith"]
+			- ["regex here"]
 			call: [other_typeofsyntax,$collection_name]
 	_1typeofsyntax:
-		regex: another regex
-		tokens: ["token1","token2","token3"]
-	#Code here like above
+		regex: regex2
+		tokens: [token1,token2,token3]
+	#Code here(like above)
 	#...................
 	#...................
 	#...................
@@ -55,9 +62,9 @@ Syntax
 			collection_name: [typeofsyntax1,typeofsyntax2]
 		varfile: filename_without_extension
 		variables:
-			var1: #regex
-			var2: #regex
-			var3 : #regex
+			var1: regex1
+			var2: regex2
+			var3 : regex3
 		after: #Command Line Commands
 		#after:
 		#- Command One
@@ -66,14 +73,16 @@ Syntax
 		#	windows: Command 
 		#	linux: Command
 
-| **typeofsyntax** - Type of syntax you wanted to match(arithmetic,loop,etc)
+| **typeofsyntax** - Name of syntax you wanted to match(eg. arithmetic,loop,etc)
 | 			   		If one type have same pattern and different regex
 | 			   		You can write _<anycharacter><typeofsyntax> for next regex.(like _1typeofsyntax)
 | 			   		Both regex use one pattern(typeofsyntax)
 | **regex** - Place where regular expression to extract particular block of code including tokens.
-| 			Regular expression for tokens must be inside brackets.
+| 			Regular expression for tokens must be inside brackets.('~' acts like '\s*')
 | **tokens** - Name of tokens you wanted to extract
+| **unmatch** - List of regex that should not be matched. It can be used in token option also
 | **global** - If it is False it works only after calling it otherwise it works normally.
+| **once** - If it is True it works only once
 | **next** - To pass converted syntax into another or same part
 | **token1** - You can modify tokens you extracted
 | 		 	*eachline* - You can additional content for eachline
@@ -93,8 +102,9 @@ Syntax
 |				*collections* - List of typeofsyntax/part with a name
 |						It can be used in call and next
 |				*after* - To run command line commands after translation
-|					  $target and $source can be used inside command($target-address of translated file,$source-address of source file)
+|					  $target and $source can be used inside command($target-Location of translated file,$source-Location of source file,$current - Location of program)
 |					  eg. python $target
+| **Note**: *regex* and *tokens* are needed for all typeofsyntax. Others are optional 
 Example
 ^^^^^^^
 .. code-block:: yaml
@@ -177,7 +187,8 @@ Command Line
 
 Downloads
 =========
-
+| **Note**: Some feature shown above work only in latest version in github repo
 | `Standalone <https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe>`_
 | `Installer <https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe>`_
-| `Source Code <https://github.com/LangTrans/LangTrans>`_
+| `Releases <https://github.com/LangTrans/LangTrans/releases>`_
+| `GitHub Repo <https://github.com/LangTrans/LangTrans>`_

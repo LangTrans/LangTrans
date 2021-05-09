@@ -76,8 +76,8 @@ For more see the [Documentation](https://langtrans.readthedocs.io/en/latest/).
 
 * [Python](https://github.com/LangTrans/Python_Trans)
 * [C](https://github.com/LangTrans/C_Trans)
-* [Common Lisp](https://github.com/B-R-P/LISP_Trans)
-* [Lua](https://github.com/B-R-P/Lua_Trans)
+* [Common Lisp](https://github.com/LangTrans/LISP_Trans)
+* [Lua](https://github.com/LangTrans/Lua_Trans)
 * [Languages by community](https://langtrans.github.io/langtransrepos/)
 
 [Share your language here](https://forms.gle/YDEKapaTZmJspyDeA)
