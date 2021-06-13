@@ -2,14 +2,14 @@ from os import system
 from os.path import dirname
 from sys import argv, exit
 from functools import partial
+from colorama import init,Fore
+init(autoreset=True)#  For colored error
+error_msg=Fore.RED+"Error:"
 """
 LangTrans
 ---------
 To customize/upgrade syntax of any programming language.
 """
-program_location = dirname(__file__)
-if len(program_location)==0:
-    program_location = "."
 def comp(regex):
     """
     Compile regular expression
@@ -20,9 +20,9 @@ def comp(regex):
     regex = regex.replace(" ",r"\s+")\
                  .replace("~",r"\s*")
     try:                    #re.MULTILINE=8
-        return compile(regex,8)
+    	return compile(regex,8)
     except rerror as err:
-        print("Error:","Invalid regex")
+        print(error_msg,"Invalid regex")
         print(err.msg)
         print("Regex:",regex.replace("\n",r"\n")\
                             .replace("\t",r"\t"))
@@ -62,13 +62,13 @@ def tknoptions(sdef, collections):
     :return: unmatches,default values,translation options and next call list
     :rtype: dict,dict,dict,list
     """
-    trans_option = dict()
-    unmatches = defaultdict(tuple)
-    defaults = defaultdict(str)
+    trans_option = {}
+    unmatches = {}
+    defaults = {}
     tkns = sdef["tokens"]
     for tkname,opts in sdef.items():
         if isinstance(opts, dict):
-            opns = dict()
+            opns = {}
             # Token options
             for opn, data in opts.items():
                 if opn == "eachline":
@@ -77,12 +77,12 @@ def tknoptions(sdef, collections):
                     try:
                         opns.update(
                             {
-                                "replace": (*[ # Tuple
-                                    (comp(reprgx[0]), reprgx[1]) # For replacing
-                                    if len(reprgx)==2
-                                    else (comp(reprgx[0]), "") # For removing
-                                    for reprgx in data
-                                ],)
+                                "replace": tuple([ # Tuple
+	                            	(comp(reprgx[0]), reprgx[1]) # For replacing
+	                                if len(reprgx)==2
+	                                else (comp(reprgx[0]), "") # For removing
+	                                for reprgx in data
+                                ])
                             }
                         )
                     except rerror as err:
@@ -99,14 +99,14 @@ def tknoptions(sdef, collections):
                         print(f'Location: Unmatch for token({tkname})')
                         raise err
                 elif opn=="default":
-                    default.update({tkname:data})
+                    defaults.update({tkname:data})
             if "," in tkname: # Spliting Token options
-                for tk in tkname.split(","):
+            	for tk in tkname.split(","):
                     if tk not in tkns: return print(f"Error: {tk} not found in tokens")#TypeError
                     trans_option[tk] = opns
-                continue
+            	continue
             if tkname not in tkns:
-                return print(f"Error: {tkname} not found in tokens")#TypeError
+                return print(f"{error_msg} {tkname} not found in tokens")#TypeError
             trans_option[tkname] = opns
                                             #Next Options
     return unmatches,defaults,trans_option, (check_collections(sdef["next"], collections) if "next" in sdef else 0)
@@ -126,6 +126,33 @@ def addvar(variables, rv):
         rv = rv.replace(f"<{varname}>", value)
     return rv
 
+def compile_rgx(errors,var):
+    for name,error in errors.items():
+        if name=="outside":
+            compile_rgx(error,var)
+            continue
+        error['regex']=comp(addvar(var,error['regex']))
+
+def comp_err(name,variables):
+    """
+    Compiling regexs in error file
+    :param name: Name of errfile
+    :param variables: Global variables
+    :type name: str
+    :type variables: dict
+    :return: compiled error inside and outside part
+    :rtype: (dict,dict)
+    """
+    errors_def=load_yaml(name)
+    outside={}
+    for part,errors in errors_def.items():
+        compile_rgx(errors,variables)
+        if 'outside' in errors:
+            outside[part]=errors.pop('outside')
+    if 'outside' in errors_def: # Outside not related to part
+        outside['']=errors_def.pop('outside')
+    return errors_def,outside
+
 def extract(spattern):
     """
     This function extract contents needed from yaml file with regex
@@ -137,21 +164,24 @@ def extract(spattern):
     """
     # Settings-----------------------------------------------------
     # Importing builtin variables
-    variables = grab_var(program_location+ "\\builtin")
+    variables = grab_var(dirname(__file__) + "\\builtin")
     after = None
+    errfile = 0#False
+    #outside=0
     if "settings" in spattern:
-        setting = spattern["settings"]
-        del spattern["settings"]
+        setting = spattern.pop('settings')
         after = setting.get("after")
         if "varfile" in setting: # Importing variables from varfile
             variables.update(grab_var(setting["varfile"]))
         if "variables" in setting: # Adding variables in settings
             variables.update(setting["variables"])
+        if 'errfile' in setting:
+            errfile,outside = comp_err(setting['errfile'],variables)
         collections = setting["collections"] if "collections" in setting else 0#False
     else:
-        collections = 0#False
-    trans_options = dict()
-    match_options = dict()
+    	collections = 0#False
+    trans_options = {}
+    match_options = {}
     try:
         for part, sdef in spattern.items():
             for opt in sdef.values(): 
@@ -166,7 +196,7 @@ def extract(spattern):
                 else:           
                     print("Part:",part)
                     print("Token Names:",len(tokens),"Capture Groups:",regex.groups)
-                    exit("Error: Number of token names is not equal to number of capture groups")
+                    exit(error_msg+" Number of token names is not equal to number of capture groups")
             unmatches,defaults,*tknopns = tknoptions(sdef, collections)
             match_options.update({
                 part: (
@@ -174,15 +204,16 @@ def extract(spattern):
                     tokens, 
                     int("global" not in sdef or sdef["global"]), # Checking Global
                     (   # Unmatch regexs for tokens
-                        (*[addvar(variables,unmatch) for unmatch in unmatches],),
+                        tuple([addvar(variables,unmatch) for unmatch in unmatches]),
                         ( # Unmatch regexs for part 
-                            (*[comp(addvar(variables,unmatch)) for unmatch in sdef["unmatch"]],)
+                            tuple([comp(addvar(variables,unmatch)) for unmatch in sdef["unmatch"]])
                             if "unmatch" in sdef
                             else ()
                         )
                     ),
                     defaults,
-                    int("once" in sdef and sdef["once"])
+                    int("once" in sdef and sdef["once"]),
+                    (errfile[part] if errfile and part in errfile else 0)#0-False
                 )
             })
             trans_options.update({part: tknopns})
@@ -190,8 +221,29 @@ def extract(spattern):
     except (rerror,TypeError): #Regex and unknown token option error 
         exit(f"Part:{part}")
     except KeyError as err: # For part without regex or tokens
-        exit(f"Error: {err} not found in {part}")
-    return after, (match_options, trans_options)
+    	exit(f"{error_msg} {err} not found in {part}")
+    return after, (match_options, trans_options,(outside if errfile and outside else 0))
+
+def err_report(part,msg,name,match,tkns,content,matchstr):
+    pos,l,indexed = getotalines(content.splitlines(),matchstr)
+    err_part=match.group()
+    if part: # Part Name
+        print(f"[{Fore.MAGENTA+part+Fore.RESET}]")
+    line=indexed[0].lstrip()
+    lineno=str(pos+1)+" |"
+    #error Line
+    print(Fore.CYAN+lineno,line.replace(err_part,Fore.RED+err_part+Fore.RESET))
+    total_msg = addvar(# Replacing variables in main and err match
+        {# Err
+            '$'+str(l):tkn
+            for l,tkn in enumerate(match.groups(),start=1)
+        },
+         addvar(tkns,msg)# Main
+    )
+    #Error Name
+    print(" "*(line.index(err_part)+len(lineno)),Fore.RED+name.replace("_"," "))
+    print(Fore.YELLOW+total_msg)#Error Info
+    exit()
 
 def matching(content, match_options, isrecursion):
     """
@@ -206,11 +258,11 @@ def matching(content, match_options, isrecursion):
     :return: Return matched parts and tokens
     :rtype: bool,dict,dict
     """
-    partmatches = dict()
+    partmatches = {}
     oncedone = matching.oncedone
     for part, options in match_options.items():
                                     # Unmatches
-        pattern,tknames,global_chk,(untkn,unpart),defaults,once = options
+        pattern,tknames,global_chk,(untkn,unpart),defaults,once,err = options
         if not isrecursion:
             if not global_chk: continue # For "global: False"
             if once: # For parts match once
@@ -222,21 +274,33 @@ def matching(content, match_options, isrecursion):
             if unpart and any((bool(rgx.search(matchstr)) for rgx in unpart)):
                 continue
             match = { # Assigning default value for None  
-                        tkname:(m if m!=None else defaults[tkname])
+                        tkname:(m if m!=None else defaults.get(tkname,""))
                         for tkname,m in zip(tknames,match.groups())
-                    }                      #Token names and matched tokens
+                    }
+            if err:# If error definition exists
+                for name,error in err.items(): # Static Code Analysis
+                    err_match = error['regex'].search(matchstr)
+                    if err_match:
+                        err_report(part,error['msg'],name,err_match,match,content,matchstr)
+                                          #Token names and matched tokens
             if untkn and any(( # Checking unmatch on every token
                         bool(rgx.search(match))
                         for match, tkname in match.items()
-                        for rgx in untkn[tkname]
+                        for rgx in untkn.get(tkname,())
                     )):
                 continue
             partmatch.append((matchstr,match))
         if partmatch:
             partmatches.update({part:partmatch})
     return partmatches
-
 matching.oncedone = []  # List of "once: True" parts that are already matched
+
+def outside_err(outside,content):
+    for part,errors in outside.items():
+        for name,error in errors.items():
+            err_match = error['regex'].search(content)
+            if err_match:
+                err_report(part,error.get('msg',""),name,err_match,{},content,err_match.group())
 
 def convert(yaml_details, content, isrecursion=False, donly=()):
     """
@@ -253,16 +317,18 @@ def convert(yaml_details, content, isrecursion=False, donly=()):
     :return: Return code with original syntax
     :rtype: str
     """
-    (match_options, trans_options), tpattern = yaml_details
+    (match_options, trans_options, outside), tpattern = yaml_details
     lopcount = 0
     if isrecursion:
-        match_options = {part:match_options[part] for part in donly}
+    	match_options = {part:match_options[part] for part in donly}
+    elif outside: # Outside error checks
+        outside_err(outside,content)
     while 1:
         partsmatches = matching(content, match_options, isrecursion)
         if not partsmatches:  # Break when no match found
             break
         elif lopcount > 100:
-            print("Error: Loop Limit Exceded")
+            print(error_msg+" Loop Limit Exceded")
             print("Bug Locations:\n","\n".join((f"{part}:{matches}" for part,matches in partsmatches.items())))
             exit()
         lopcount += 1
@@ -297,8 +363,29 @@ def convert(yaml_details, content, isrecursion=False, donly=()):
                                 # Token values added from other tokens
                 if next_optns:  # Next Part option
                     temp_pattern = re_convert(content=temp_pattern,donly=next_optns)
-                content = content.replace(partmatch, temp_pattern)
+                try:
+                    content = content.replace(partmatch, temp_pattern)
+                except Exception:
+                    print(temp_pattern)
     return content
+
+def getotalines(lines,substring):
+    sublines = substring.splitlines()
+    sublen = len(sublines)
+    for pos,line in enumerate(lines):
+        if sublines[0] in line: #If first line matched
+            if pos>=(len(lines)-sublen): # If reached end of string
+                return
+            indexed = lines[pos:pos+sublen] # rest of line
+            for linepart,subline in zip(indexed,sublines[1:]): # Check rest of line
+                if subline not in linepart: # Break if subline not matched
+                    break
+            else: # Break if sublines are matched
+                break
+    else: # Return if sublines are not matched in lines
+        return# No match Found
+    return pos,sublen,indexed#dict(zip(sublines,indexed))
+
 def load_yaml(file):
     """
     To load yaml files
@@ -314,12 +401,12 @@ def load_yaml(file):
     try:
         return load(open(file).read(), Loader=SafeLoader)
     except (ScannerError,ParserError) as err: # Error message for Invalid Yaml File
-        print("Error:",file,'is invalid')
+        print(error_msg,file,'is invalid')
         print(err.problem,err.context)
         print(err.problem_mark.get_snippet())
         exit()
     except FileNotFoundError:
-        exit(f"Error: {file} not found")
+        exit(f"{error_msg} {file} not found")
 
 def grab(source, target):
     """
@@ -335,21 +422,21 @@ def grab(source, target):
     spattern = load_yaml(source)
     tpattern = load_yaml(target)
     for part in spattern:  # Template checking
-        if not(part in tpattern or part=="settings"):
+    	if not(part in tpattern or part=="settings"):
             if part.startswith("_"):# For parts with same pattern
                 bpart = part[2:] #Base part
                 if bpart in spattern:# Since template is same, tokens also same
-                    spattern[part]['tokens']=spattern[bpart]['tokens']
+                	spattern[part]['tokens']=spattern[bpart]['tokens']
                 else:
-                    exit(f"Error: {bpart} for {part} not found")
+                	exit(f"{error_msg} {bpart} for {part} not found")
                 if bpart in tpattern: # Template checking
-                    tpattern[part]=tpattern[bpart]
-                    continue
+                	tpattern[part]=tpattern[bpart]
+                	continue
                 part=bpart
             if not spattern[part]['tokens']:
                 tpattern[part]=""
                 continue
-            exit(f"Error: Template for {part} not found")
+            exit(f"{error_msg} Template for {part} not found")
     after, rest = extract(spattern)
     return after, (rest, tpattern)
 
@@ -362,13 +449,13 @@ def grab_var(file):
     :return: Dictionary of variables
     :rtype: dict
     """
-    variables = dict()
+    variables = {}
     try:
         v = load_yaml(file)
         if v is not None:
             variables.update(v)
     except ValueError:
-        exit(f"Error: Invalid varfile({file}.yaml)\n")
+        exit(f"{error_msg} Invalid varfile({file}.yaml)\n")
     return variables
 
 def get_ltz(filename):
@@ -376,7 +463,7 @@ def get_ltz(filename):
     try:
         return load(open(filename+".ltz", "rb"))
     except FileNotFoundError as err:
-        exit(f"Error: {err.filename} not found")
+        exit(f"{error_msg} {err.filename} not found")
 
 def doc(file):
     """
@@ -416,17 +503,11 @@ def doc(file):
              )
   
 if __name__ == "__main__":
-    len_argv = len(argv) 
-    if  len_argv == 1 or (len_argv == 2 and argv[1] == "-h"): 
-        print("Test:    <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
-        print("Compile: -c <SyntaxRepr> <PatternRepr> <CompileFile>")
-        print("Run:     -f <SoureFileName> <OutputFileName> <CompileFile>")
-        print("-y - To run after command automatically")
-        print("-n - To prevent executing after command")
-        print("-v - Verbose mode")
-        exit("SyntaxRepr,PatternRepr,CompileFile: without extension(.yaml,.ltz)")
-    elif len_argv==2:
-        exit("Error: Insufficient number of arguments")
+    if len(argv) == 1 or (len(argv) == 2 and argv[1] == "-h"):
+        print("Arg usage: <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
+        exit("SyntaxRepr,PatternRepr: without extension(.yaml)")
+    elif len(argv) < 3:
+        exit(error_msg+" Insufficient number of arguments")
     try:
         #Terminal Options------------------------------------------------
         yes = "-y" in argv  # To run after command automatically
@@ -443,11 +524,10 @@ if __name__ == "__main__":
         if "-c" in argv:  # Compile into ltz
             from pickle import dump, HIGHEST_PROTOCOL
             from re import compile, error as rerror
-            from collections import defaultdict
 
             argv[-1] += ".ltz"
             dump(grab(argv[2], argv[3]), open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL)
-            print("Compiled successfully")
+            print(Fore.GREEN+"Compiled successfully")
             exit("File saved as "+argv[-1])
         elif "-f" in argv:  # Run compiled ltz
             argv.remove("-f")
@@ -466,7 +546,7 @@ if __name__ == "__main__":
         re_convert = partial(convert,yaml_details=yaml_details,isrecursion=True)
         targetcode = convert(yaml_details,content)
         open(argv[2], "w").write(targetcode)
-        print("Saved as",argv[2])
+        print(Fore.GREEN,"Saved as",argv[2])
         if verbose:
             print(targetcode)
         # For after command in settings
@@ -475,7 +555,7 @@ if __name__ == "__main__":
                 from platform import system as systm
                 osname = systm().lower()  # Current os name
                 if osname not in after:
-                    print(f"Error: No after command for {osname}. OS name eg. linux, windows")
+                    print(f"{error_msg} No after command for {osname}. OS name eg. linux, windows")
                     exit()
                 after = after[osname]
             if isinstance(after, list):  # For multiple commands
@@ -484,7 +564,7 @@ if __name__ == "__main__":
             after_var = (
                             ("$target",argv[2]),
                             ("$source",argv[1]),
-                            ("$current",program_location)
+                            ("$current",dirname(__file__))
                         )
             for var, val in after_var:
                 after = after.replace(var, val)
@@ -496,4 +576,4 @@ if __name__ == "__main__":
             if inp.lower() != "n":
                 system(after)
     except Exception as err:
-        print("Program Error:",err)
+        print("Program",error_msg,err)
