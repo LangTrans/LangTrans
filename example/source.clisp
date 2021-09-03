@@ -1,3 +1,0 @@
-func printhis(x):
-	format(t,x)
-printhis("Customized Successfully!")
