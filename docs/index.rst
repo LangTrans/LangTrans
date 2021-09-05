@@ -3,8 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to LangTrans's documentation!
-=====================================
+Welcome to LangTrans Documentation
+==================================
+
 LangTrans is used to customize any programming language.
 You can make your own syntax for any programming languages. 
 
@@ -26,6 +27,7 @@ Implementation
 ==============
 | To customize you should extract tokens with regular expression.
 | Then you should create the template of orginal language with token you extracted.
+
 Token Extraction
 ----------------
 YAML file with regular expression
@@ -34,44 +36,44 @@ Syntax
 ^^^^^^
 .. code-block:: yaml
 
-	typeofsynax:
-		regex: regex (regex for token1) <var1> regex
-		tokens: [token1,token2,token3]
-		unmatch:
-		- regex
-		global: True
-		once: True
-		next: [other_typeofsyntax,$collection_name]
-		token1:
-			unmatch:
-			- regex
-			eachline: extra_here <line> extra_here
-			replace:
-			- [regex,"replacewith"]
-			- ["regex here"]
-			call: [other_typeofsyntax,$collection_name]
-	_1typeofsyntax:
-		regex: regex2
-		tokens: [token1,token2,token3]
-	#Code here(like above)
-	#...................
-	#...................
-	#...................
-	settings:
-		collections:
-			collection_name: [typeofsyntax1,typeofsyntax2]
-		varfile: filename_without_extension
-		variables:
-			var1: regex1
-			var2: regex2
-			var3 : regex3
-		after: #Command Line Commands
-		#after:
-		#- Command One
-		#- Command Two
-		#after:
-		#	windows: Command 
-		#	linux: Command
+    typeofsynax:
+        regex: regex (regex for token1) <var1> regex
+        tokens: [token1,token2,token3]
+        unmatch:
+        - regex
+        global: True
+        once: True
+        next: [other_typeofsyntax,$collection_name]
+        token1:
+            unmatch:
+            - regex
+            eachline: extra_here <line> extra_here
+            replace:
+            - [regex,"replacewith"]
+            - ["regex here"]
+            call: [other_typeofsyntax,$collection_name]
+    _1typeofsyntax:
+        regex: regex2
+        tokens: [token1,token2,token3]
+    #Code here(like above)
+    #...................
+    #...................
+    #...................
+    settings:
+        collections:
+            collection_name: [typeofsyntax1,typeofsyntax2]
+        varfile: filename_without_extension
+        variables:
+            var1: regex1
+            var2: regex2
+            var3 : regex3
+        after: #Command Line Commands
+        #after:
+        #- Command One
+        #- Command Two
+        #after:
+        #	windows: Command 
+        #	linux: Command
 
 | **typeofsyntax** - Name of syntax you wanted to match(eg. arithmetic,loop,etc)
 | 			   		If one type have same pattern and different regex
@@ -109,12 +111,12 @@ Example
 ^^^^^^^
 .. code-block:: yaml
 
-	shorthand:
-	  regex: <var>\+=<var>
-	  tokens: [var,num]
-	settings:
-		variables:
-			var: ([A-Za-z0-9_]+)
+    shorthand:
+      regex: <var>\+=<var>
+      tokens: [var,num]
+    settings:
+        variables:
+            var: ([A-Za-z0-9_]+)
 
 Template
 --------
@@ -124,7 +126,7 @@ Syntax
 ^^^^^^
 .. code-block:: yaml
 
-	typeofsyntax: "syntax1 <token1> middle syntax <token2> syntax3 <token3>"
+    typeofsyntax: "syntax1 <token1> middle syntax <token2> syntax3 <token3>"
 
 | You can represent syntax of orginal language here(like a template)
 | **token1,token2,token3**  - Represents tokens extracted
@@ -134,7 +136,50 @@ Example
 ^^^^^^^
 .. code-block:: yaml
 
-	shorthand: (incf <var> <num>)
+    shorthand: (incf <var> <num>)
+
+Linting
+=======
+
+Syntax
+------
+.. code-block:: yaml
+
+    PartName: 
+        # Errors Block----------
+
+        NameofError:
+            #Error Details------
+            regex: Regex
+            msg: Error Message
+            help: Help Message
+            #-------------------
+        
+        NameofError1:
+            #Error Details here
+        
+        # ----------------------
+
+        # Outside Block---------
+        outside:
+            # Errors Block here
+        #-----------------------
+
+    PartName1:
+        #Errors Block here
+        #Outside Block here
+
+    # Outside Block here
+
+| **PartName** - Same as typeofsyntax in *source.yaml*.
+|				 Error regex is only matched inside text matched by main regex.
+| **outside**  - To match error regex in whole source code.
+|				 Outside block can be used inside and outside part block.
+| 				 Outside block inside part block should be related to that part.
+| **NameofError** - Name the error you want to find (eg. TypeError, Syntax Error,etc.)
+| **Regex** - Regular expression to match error part of code
+| **Error Message** - Details of error
+| **Help Message** (optional) - Steps to resolve the error
 
 Functions
 ========
@@ -150,7 +195,7 @@ Command Line
 
 .. code-block:: console
 
-	py langtrans.py <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>
+    py langtrans.py <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>
 
 | **SourceFileName** - File name of source code written with new syntax
 | **OutputFileName** - File name of source code you want to generate with orginal syntax
@@ -161,7 +206,7 @@ Command Line
 
 .. code-block:: console
 
-	py langtrans.py -c <SyntaxRepr> <PatternRepr> <compfile>
+    py langtrans.py -c <SyntaxRepr> <PatternRepr> <compfile>
 
 | **compfile** - Name of compiled file(without extension)
 | filename.ltz will be generated.
@@ -170,13 +215,13 @@ Command Line
 
 .. code-block:: console
 
-	py langtrans.py -f <SoureFileName> <OutputFileName> <compfile>
+    py langtrans.py -f <SoureFileName> <OutputFileName> <compfile>
 
 **Docs of SyntaxRepr**
 
 .. code-block:: console
 
-	py langtrans.py -d <SyntaxRepr>
+    py langtrans.py -d <SyntaxRepr>
 
 **Other Options**
 
