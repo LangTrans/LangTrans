@@ -68,6 +68,7 @@ Syntax
             var2: regex2
             var3 : regex3
         after: #Command Line Commands
+        errfile: # Base Name
         #after:
         #- Command One
         #- Command Two
@@ -105,8 +106,10 @@ Syntax
 |						It can be used in call and next
 |				*after* - To run command line commands after translation
 |					  $target and $source can be used inside command($target-Location of translated file,$source-Location of source file,$current - Location of program)
+|               *errfile* - File with error definitions for linting
 |					  eg. python $target
-| **Note**: *regex* and *tokens* are needed for all typeofsyntax. Others are optional 
+| **Note**: *regex* and *tokens* are needed for all typeofsyntax. Others are optional
+
 Example
 ^^^^^^^
 .. code-block:: yaml
@@ -139,10 +142,16 @@ Example
     shorthand: (incf <var> <num>)
 
 Linting
-=======
+-------
+
+| To match error with regular expression.
+| If error is matched, part of code with error and error message will be displayed.
 
 Syntax
-------
+^^^^^^
+
+Syntax of error file
+
 .. code-block:: yaml
 
     PartName: 
@@ -181,8 +190,26 @@ Syntax
 | **Error Message** - Details of error
 | **Help Message** (optional) - Steps to resolve the error
 
+Example
+^^^^^^^
+
+.. code-block:: yaml
+
+    fstring:
+        Cannot_Quote:
+            regex: '{(?:(?!\}).)*"'
+            msg: "Can't use '\"' inside '{}'"
+            help: Asign constant to a variable and add that variable to fstring
+        Multiple_Curly:
+            regex: '{(?:(?!}).)*{'
+            msg: Cant't use nested curly brace
+    outside:
+        Invalid_Object:
+            regex: 'class <var>\((?:(?!\)).)*\n'
+            msg: No Multiline
+
 Functions
-========
+=========
 
  .. automodule:: LangTrans
    :members:
