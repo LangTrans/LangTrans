@@ -2,7 +2,7 @@
 To customize any programming language
 
 <a href="https://discord.gg/3nDwppur5S"><img alt="Discord" src="https://img.shields.io/discord/802179593293267006?style=flat-square&logo=discord"></a>
-<a href="https://langtrans.readthedocs.io/en/latest/"><img alt="Docs" src="https://img.shields.io/readthedocs/langtrans?style=flat-square&logo=read-the-docs"></a>
+<a href="https://bijinregipanicker.gitbook.io/langtrans/"><img alt="Docs" src="https://img.shields.io/readthedocs/langtrans?style=flat-square&logo=read-the-docs"></a>
 <a href="https://raw.githubusercontent.com/B-R-P/LangTrans/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/B-R-P/langtrans?style=flat-square&logo=open-source-initiative"></a>
 
 LangTrans is a syntactic preprocessor<br>
