@@ -2,6 +2,7 @@
 LangTrans
 ---------
 To customize/upgrade syntax of any programming language.
+Docs: https://bijinregipanicker.gitbook.io/langtrans/
 """
 from os import system
 from os.path import dirname

@@ -70,7 +70,7 @@ py langtrans.py source.cpy target.py source target
 Then you can use generated source code.<br>(source.py).
 
 ### Documentation
-For more see the [Documentation](https://langtrans.readthedocs.io/en/latest/).
+For more see the [Documentation](https://bijinregipanicker.gitbook.io/langtrans/).
 
 ### Languages
 
