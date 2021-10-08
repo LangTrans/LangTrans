@@ -163,22 +163,21 @@ __make:
       - [\bpass\b,return locals()]
 settings:
   variables:
-    sptab: (?:(?:\t|\s)+) # Space and Tab
-    tab: ^(<sptab>*) # For tab
+    tab: ^((?:(?:\t|\s)+)*) # For tab
     lstip: "^\\s{1,}" # Remove space in left
     rstrip: "\\s{1,}$" # Remove space in right
     var: \w+ # Variable/Function Names
     bracket: \((.*)\) # Get content inside bracket
     spvar: \s*\w+\s* # Variable Name with space around
     args: \((<spvar>(?:,<spvar>)*)\) # To get arguments
-    i1: (\n(?:<sptab>+?).*(?:(?:\n\\ # For multiline
+    i1: (\n(?:(?:(?:\t|\s)+)+?).*(?:(?:\n\\ # For multiline
     i2: .*)*\n*)*) # End multline
     op: (?:\+|-|\*|\\) #Arthematic Operators
     narrow: ((?:(?!\s*->).)+) #Not arrow
     line: (?:\n.+) # For single line
     lines: <line>+ # For multiple lines
     # To get indentation level and block of statements
-    tablock: .*(\n<sptab>+)(.+<line>*)
+    tablock: .*(\n(?:(?:\t|\s)+)+)(.+<line>*)
   author: Name
   lang: Python
     

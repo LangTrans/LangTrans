@@ -51,6 +51,7 @@ _var  = dict[str,str]
 init(autoreset=True) 
 error_msg = Fore.RED + "Error:"
 
+
 def comp(regex: str)->Pattern:
     "Compile regular expression"  
                 # To emulate tokens(in parsers)
@@ -232,6 +233,8 @@ def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_ou
                          + " Number of token names is not equal to number of capture groups"
                     )
             unmatches, defaults, tknopns = tknoptions(sdef, collections,variables)
+            if m:=var_rgx.search(regex.pattern):
+                print(Fore.YELLOW+"Warning:",m.group(),"not found")
             match_options[part] = (
                 regex,
                 tokens,
@@ -578,7 +581,7 @@ if __name__ == "__main__":
         if "-c" in argv:  # Compile into ltz
             from pickle import dump, HIGHEST_PROTOCOL
             from re import compile, error as rerror
-
+            var_rgx = compile(r"<\w+>")
             argv[-1] += ".ltz"
             dump(
                 grab(argv[2], argv[3]), open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL
@@ -593,7 +596,7 @@ if __name__ == "__main__":
             exit()
         else:
             from re import compile, error as rerror
-
+            var_rgx = compile(r"<\w+>")
             yaml_details = grab(argv[3], argv[4])
         # -------------------------------------------------------------------
         after, yaml_details = yaml_details
