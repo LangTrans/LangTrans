@@ -53,24 +53,10 @@ func printhis(s):
 printhis("Customized!")
 ```
 
-### Customize with LangTrans
-
-First you should write code with new syntax.<br>(source.cpy)
-
-Second you should write regular expression to extract tokens from customized language, in a yaml file<br>(Like example/source.yaml)
-
-Third to replace customized syntax with original syntax with help of token extracted, write the template of orginal syntax.<br>(Like example/target.yaml)
-
-```console
-py langtrans.py source.cpy target.py source target
-                #<customized> <orginal> <syntax> <template>
-```
-(It will convert your customized language to original language)
-
-Then you can use generated source code.<br>(source.py).
-
 ### Documentation
-For more see the [Documentation](https://bijinregipanicker.gitbook.io/langtrans/).
+[Getting Started](https://bijinregipanicker.gitbook.io/langtrans/getting-started)
+
+[Full Documentation](https://bijinregipanicker.gitbook.io/langtrans/).
 
 ### Languages
 
