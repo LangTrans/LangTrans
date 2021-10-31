@@ -70,7 +70,7 @@ def comp(regex: str)->Pattern:
 
 def check_collections(calls: list[str], collections:_collections) -> tuple[str, ...]:
     """
-    This add collections into call list
+    This function adds collections into call list.
 
     :param calls: List with collection names and part names
     :param collections: Dictionary of collections and its names
@@ -93,11 +93,11 @@ def check_collections(calls: list[str], collections:_collections) -> tuple[str, 
 def tknoptions(sdef: dict[str,Any], collections:_collections,variables:_var
     )->tuple[_unmatches,dict[str,str],tuple[_tknopts,Optional[tuple[str,...]]]]:
     """
-    This function extract token options from yaml file
+    This function extracts token options from a yaml file.
 
-    :param sdef: Contains token options
-    :param collections: Dictionary of collections and its names
-    :return: unmatches,default values,translation options and next call list
+    :param sdef: Contains token options.
+    :param collections: Dictionary of collections and their names.
+    :return: unmatches, default values, translation options and next call list.
     """
     trans_option:_tknopts = {}
     unmatches:_unmatches = {}
@@ -154,11 +154,11 @@ def tknoptions(sdef: dict[str,Any], collections:_collections,variables:_var
 
 def addvar(variables: _var, rv: str):
     """
-    To Replace <varname> with its value
+    This function replaces <varname> with its value.
 
-    :param variables: Dictionary of variables
-    :param rv: String containing <varname>
-    :return: variable replaced string
+    :param variables: Dictionary of variables.
+    :param rv: String containing <varname>.
+    :return: variable replaced string.
     """
     for varname, value in reversed(variables.items()):
         rv = rv.replace(f"<{varname}>", value)
@@ -175,10 +175,11 @@ def compile_rgx(errors: _any, var:_var):
 
 def comp_err(name: str, variables: _var)->tuple[dict[str,err_dict],_outside]:
     """
-    Compiling regexs in error file
-    :param name: Name of errfile
-    :param variables: Global variables
-    :return: compiled error inside and outside part
+    Compiling regexes in an error file.
+
+    :param name: Name of errfile.
+    :param variables: Global variables.
+    :return: compiled error inside and outside part.
     """
     errors_def = load_yaml(name)
     outside = {}
@@ -193,10 +194,10 @@ def comp_err(name: str, variables: _var)->tuple[dict[str,err_dict],_outside]:
 
 def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_outside]]:
     """
-    This function extract contents needed from yaml file with regex
+    This function extracts contents needed from yaml file with regex.
 
-    :param spattern: Dictionary with yaml file details
-    :return: after command and (match options, token options)
+    :param spattern: Dictionary with yaml file details.
+    :return: after command and (match options, token options).
     """
     # Importing builtin variables
     variables = grab_var(dirname(__file__) + "\\builtin")
@@ -265,7 +266,7 @@ def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_ou
 
 def err_report(part: str, msg: str, name: str, match:Match, 
                tkns: dict, content: str, matchstr: str):
-    "To show error messages for Syntax Errors"
+    """Shows error messages for Syntax Errors."""
     pos, l, indexed = getotalines(content.splitlines(), matchstr)
     err_part = match.group()
     if part:  # Part Name
@@ -287,12 +288,12 @@ def err_report(part: str, msg: str, name: str, match:Match,
 def matching(content: str, match_options: _match_options, isrecursion: bool
     ) -> dict[str, list[tuple[str, dict[str, str]]]]:
     """
-    To match parts of source code
+    Matches parts of source code.
 
-    :param content: source code
-    :param match_options: Options for each part in yaml file
-    :param isrecursion: Boolean to find convert function is in recursion or not
-    :return: Return matched parts and tokens
+    :param content: source code.
+    :param match_options: Options for each part in yaml file.
+    :param isrecursion: Boolean to find if the convert function is in recursion or not.
+    :return: Return matched parts and tokens.
     """
     partmatches = {}
     oncedone = matching.oncedone
@@ -342,7 +343,7 @@ matching.oncedone = []  # List of "once: True" parts that are already matched
 
 
 def outside_err(outside: _outside, content: str):
-    "Find syntax errors in source code and show error messages"
+    "Find syntax errors in the source code and show error messages."
     for part, errors in outside.items():
         for name, error in errors.items():
             err_match = error["regex"].search(content)
@@ -355,13 +356,13 @@ def convert(yaml_details:_yaml_details ,content: str,
             isrecursion: bool = False,donly: Union[tuple[str, ...]]=()
     ):
     """
-    This is main function convert new syntax to orginal syntax
+    This is the main function that converts new syntax to orignal syntax.
 
-    :param content: Code with new syntax
-    :param yaml_details: Details extracted from yaml files
-    :param isrecursion: To check recursion call or not
-    :param donly: parts that should only converted(used during part calling)
-    :return: Return code with original syntax
+    :param content: Code with the new syntax.
+    :param yaml_details: Details extracted from yaml files.
+    :param isrecursion: A flag to check if there is a recursion call or not.
+    :param donly: parts that should only be converted(used during part calling).
+    :return: Return code with original syntax.
     """
     (match_options, trans_options, outside), tpattern = yaml_details
     lopcount = 0
@@ -424,7 +425,7 @@ def convert(yaml_details:_yaml_details ,content: str,
 
 
 def getotalines(lines: list[str], substring: str):
-    "Find line inwhich substring located"
+    "Find line in which the substring is located."
     sublines = substring.splitlines()
     sublen = len(sublines)
     for pos, line in enumerate(lines):
@@ -444,9 +445,10 @@ def getotalines(lines: list[str], substring: str):
 
 def load_yaml(file: str)->dict[str,Any]:
     """
-    To load yaml files
-    :param file: File base name
-    :return: Yaml Details
+    Loads yaml files.
+
+    :param file: The base filename.
+    :return: Yaml Details.
     """
     from yaml import load, SafeLoader
     from yaml.scanner import ScannerError
@@ -466,11 +468,11 @@ def load_yaml(file: str)->dict[str,Any]:
 
 def grab(source: str, target: str)->tuple[_after,_yaml_details]:
     """
-    To get details from source and target yaml files
+    Gets details from source and target yaml files.
 
-    :param argv: array of arguments
-    :param l: location of argument needed
-    :return: after command and yaml details
+    :param argv: Array of arguments.
+    :param l: Location of the argument needed.
+    :return: The after command and yaml details.
     """
     spattern = load_yaml(source)
     tpattern = load_yaml(target)
@@ -496,10 +498,10 @@ def grab(source: str, target: str)->tuple[_after,_yaml_details]:
 
 def grab_var(file: str)->_var:
     """
-    To variables from external file
+    Load variables from external file.
 
-    :param file: Address of external file
-    :return: Dictionary of variables
+    :param file: Address of the external file.
+    :return: Dictionary of variables.
     """
     variables = {}
     try:
@@ -523,10 +525,10 @@ def get_ltz(filename: str)->tuple[_after,_yaml_details]:
 
 def doc(file: str):
     """
-    To print documentation of part in yaml file
+    Prints documentation of the part in yaml file.
     CommandLine: python langtrans.py -d source
 
-    :param file: Addres of file
+    :param file: Address of the file.
     """
     yaml = load_yaml(file)
     if "settings" in yaml:
