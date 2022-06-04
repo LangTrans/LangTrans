@@ -3,6 +3,12 @@ LangTrans
 ---------
 To customize/upgrade syntax of any programming language.
 Docs: https://bijinregipanicker.gitbook.io/langtrans/
+
+License
+-------
+MIT License
+Copyright (c) 2021 Bijin Regi Panicker
+See LICENSE file for orginal text.
 """
 from os import system
 from os.path import dirname
