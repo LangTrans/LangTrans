@@ -54,11 +54,14 @@ printhis("Customized!")
 ```
 
 ### Documentation
-[Getting Started](https://bijinregipanicker.gitbook.io/langtrans/getting-started)
+------------------
 
-[Full Documentation](https://bijinregipanicker.gitbook.io/langtrans/).
+* [Getting Started](https://bijinregipanicker.gitbook.io/langtrans/getting-started)
+
+* [Full Documentation](https://bijinregipanicker.gitbook.io/langtrans/)
 
 ### Languages
+--------------
 
 * [Python](https://github.com/LangTrans/Python_Trans)
 * [C](https://github.com/LangTrans/C_Trans)
@@ -67,6 +70,9 @@ printhis("Customized!")
 * [Languages by community](https://langtrans.github.io/langtransrepos/)
 
 [Share your language here](https://forms.gle/YDEKapaTZmJspyDeA)
+
 ### Downloads
-[Standalone](https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe)<br>
-[Installer](https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe)
+-------------
+
+* [Standalone](https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe)<br>
+* [Installer](https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe)
