@@ -1,7 +1,7 @@
 """
 LangTrans
 ---------
-To customize/upgrade syntax of any programming language.
+To customize/upgrade the syntax of any programming language.
 Docs: https://bijinregipanicker.gitbook.io/langtrans/
 
 License
@@ -17,66 +17,66 @@ from functools import partial
 from typing import Any, Match, Pattern, TypedDict, Union, Optional
 from colorama import init, Fore
 
-#Types------------------------------
-Pattern=Pattern[str]# Compiled Regex
-Match=Match[str]# Matched String
-err_details = TypedDict('err_details',regex=Pattern,msg=str)
-err_dict = dict[str,err_details]
-_unmatches = dict[str, tuple[Pattern,...]]
-_match_options=dict[str, 
-    tuple[
-        Pattern,#regex
-        tuple[str,...],#tokens
-        bool,#Global
-        tuple[
-            _unmatches,#untkn
-            tuple[Pattern,...]#unpart
-        ],
-        dict[str,str],#defaults
-        bool,#once
-        Optional[err_dict]#err
-    ]
+# Types------------------------------
+Pattern = Pattern[str]  # Compiled Regex
+Match = Match[str]  # Matched String
+err_details = TypedDict('err_details', regex=Pattern, msg=str)
+err_dict = dict[str, err_details]
+_unmatches = dict[str, tuple[Pattern, ...]]
+_match_options = dict[str,
+                      tuple[
+                          Pattern,  # regex
+                          tuple[str, ...],  # tokens
+                          bool,  # Global
+                          tuple[
+                              _unmatches,  # untkn
+                              tuple[Pattern, ...]  # unpart
+                          ],
+                          dict[str, str],  # defaults
+                          bool,  # once
+                          Optional[err_dict]  # err
+                      ]
 ]
 _outside = Optional[dict[str, err_dict]]
-_tpattern  = Optional[dict[str, str]]
-_next_optns=Optional[Union[tuple[str, ...]]]
+_tpattern = Optional[dict[str, str]]
+_next_optns = Optional[Union[tuple[str, ...]]]
 _opts = TypedDict('_opts',
-    replace=tuple[tuple[Union[Pattern,str],str],...],
-    call=tuple[str,...],eachline=str
-)
-_tknopts =  dict[str,_opts]
-_opns =  tuple[_tknopts,_next_optns]
-_trans_options=dict[str,_opns]
-_yaml_details = tuple[tuple[_match_options,_trans_options,_outside],_tpattern]
-_collections=Optional[dict[str, Optional[list[str]]]]
-_after =Optional[Union[list[str], str, dict[str, str]]]
-_any = dict[str, dict[str,Any]]
-_var  = dict[str,str]
-#-----------------------------------
+                  replace=tuple[tuple[Union[Pattern, str], str], ...],
+                  call=tuple[str, ...], eachline=str
+                  )
+_tknopts = dict[str, _opts]
+_opns = tuple[_tknopts, _next_optns]
+_trans_options = dict[str, _opns]
+_yaml_details = tuple[tuple[_match_options, _trans_options, _outside], _tpattern]
+_collections = Optional[dict[str, Optional[list[str]]]]
+_after = Optional[Union[list[str], str, dict[str, str]]]
+_any = dict[str, dict[str, Any]]
+_var = dict[str, str]
+# -----------------------------------
 #  For colored error - Intialiazing colorama
-init(autoreset=True) 
+init(autoreset=True)
 error_msg = Fore.RED + "Error:"
 
 
-def comp(regex: str)->Pattern:
-    "Compile regular expression"  
-                # To emulate tokens(in parsers)
-    regex = regex.replace(" ", r"\s+")\
-                 .replace("~", r"\s*")
+def comp(regex: str) -> Pattern:
+    """Compiles regular expression"""
+    # To emulate tokens(in parsers)
+    regex = regex.replace(" ", r"\s+") \
+        .replace("~", r"\s*")
     try:  # re.MULTILINE=8
         return compile(regex, 8)
     except rerror as err:
         print(error_msg, "Invalid regex")
         print(err.msg)
-        print("Regex:", regex.replace("\n", r"\n")\
-                             .replace("\t", r"\t"))
+        print("Regex:", regex.replace("\n", r"\n") \
+              .replace("\t", r"\t"))
         print(" " * (err.pos + 7) + "^")
         raise err
 
 
-def check_collections(calls: list[str], collections:_collections) -> tuple[str, ...]:
+def check_collections(calls: list[str], collections: _collections) -> tuple[str, ...]:
     """
-    This function adds collections into call list.
+    This function adds collections to the call list.
 
     :param calls: List with collection names and part names
     :param collections: Dictionary of collections and its names
@@ -96,22 +96,22 @@ def check_collections(calls: list[str], collections:_collections) -> tuple[str, 
     return tuple(narr)
 
 
-def tknoptions(sdef: dict[str,Any], collections:_collections,variables:_var
-    )->tuple[_unmatches,dict[str,str],tuple[_tknopts,Optional[tuple[str,...]]]]:
+def tknoptions(sdef: dict[str, Any], collections: _collections, variables: _var
+               ) -> tuple[_unmatches, dict[str, str], tuple[_tknopts, Optional[tuple[str, ...]]]]:
     """
     This function extracts token options from a yaml file.
 
     :param sdef: Contains token options.
     :param collections: Dictionary of collections and their names.
-    :return: unmatches, default values, translation options and next call list.
+    :return: unmatches, default values, translation options, and next call list.
     """
-    trans_option:_tknopts = {}
-    unmatches:_unmatches = {}
-    defaults:dict[str,str] = {}
-    tkns:list = sdef["tokens"]
+    trans_option: _tknopts = {}
+    unmatches: _unmatches = {}
+    defaults: dict[str, str] = {}
+    tkns: list = sdef["tokens"]
     for tkname, opts in sdef.items():
         if isinstance(opts, dict):
-            opns:_opts = {}
+            opns: _opts = {}
             # Token options
             for opn, data in opts.items():
                 if opn == "eachline":
@@ -119,11 +119,11 @@ def tknoptions(sdef: dict[str,Any], collections:_collections,variables:_var
                 elif opn == "replace":
                     try:
                         opns["replace"] = tuple([
-                                (comp(reprgx[0]), reprgx[1])  # For replacing
-                                if len(reprgx) == 2
-                                else (comp(reprgx[0]), "")  # For removing
-                                for reprgx in data
-                            ])
+                            (comp(reprgx[0]), reprgx[1])  # For replacing
+                            if len(reprgx) == 2
+                            else (comp(reprgx[0]), "")  # For removing
+                            for reprgx in data
+                        ])
                     except rerror as err:
                         print(f"Location: Replace option for token({tkname})")
                         raise err
@@ -133,7 +133,7 @@ def tknoptions(sdef: dict[str,Any], collections:_collections,variables:_var
                     if not isinstance(data, list):
                         data = (data,)
                     try:  # Compiling regex
-                        unmatches[tkname] = tuple([comp(addvar(variables,rgx)) for rgx in data])
+                        unmatches[tkname] = tuple([comp(addvar(variables, rgx)) for rgx in data])
                     except rerror as err:
                         print(f"Location: Unmatch for token({tkname})")
                         raise err
@@ -150,7 +150,7 @@ def tknoptions(sdef: dict[str,Any], collections:_collections,variables:_var
             trans_option[tkname] = opns
             # Next Options
     return (
-        unmatches,defaults,
+        unmatches, defaults,
         (
             trans_option,
             (check_collections(sdef["next"], collections) if "next" in sdef else None)
@@ -171,7 +171,7 @@ def addvar(variables: _var, rv: str):
     return rv
 
 
-def compile_rgx(errors: _any, var:_var):
+def compile_rgx(errors: _any, var: _var):
     for name, error in errors.items():
         if name == "outside":
             errors = compile_rgx(error, var)
@@ -179,9 +179,10 @@ def compile_rgx(errors: _any, var:_var):
         error["regex"] = comp(addvar(var, error["regex"]))
     return errors
 
-def comp_err(name: str, variables: _var)->tuple[dict[str,err_dict],_outside]:
+
+def comp_err(name: str, variables: _var) -> tuple[dict[str, err_dict], _outside]:
     """
-    Compiling regexes in an error file.
+    Compiles regexes in an error file.
 
     :param name: Name of errfile.
     :param variables: Global variables.
@@ -190,7 +191,7 @@ def comp_err(name: str, variables: _var)->tuple[dict[str,err_dict],_outside]:
     errors_def = load_yaml(name)
     outside = {}
     for part, errors in errors_def.items():
-        errors  = compile_rgx(errors, variables)
+        errors = compile_rgx(errors, variables)
         if "outside" in errors:
             outside[part] = errors.pop("outside")
     if "outside" in errors_def:  # Outside not related to part
@@ -198,7 +199,7 @@ def comp_err(name: str, variables: _var)->tuple[dict[str,err_dict],_outside]:
     return errors_def, outside
 
 
-def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_outside]]:
+def extract(spattern: _any) -> tuple[_after, tuple[_match_options, _trans_options, _outside]]:
     """
     This function extracts contents needed from yaml file with regex.
 
@@ -208,7 +209,7 @@ def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_ou
     # Importing builtin variables
     variables = grab_var(dirname(__file__) + "\\builtin")
     # Settings-------------------------------------------------------
-    after,errfile,outside,collections=None,None,None,None
+    after = errfile = outside = collections = None
     if "settings" in spattern:
         setting = spattern.pop("settings")
         after = setting.get("after")
@@ -219,16 +220,16 @@ def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_ou
         if "errfile" in setting:
             errfile, outside = comp_err(setting["errfile"], variables)
         collections = setting.get("collections")
-    #-----------------------------------------------------------------
-    trans_options:_trans_options = {}
-    match_options:_match_options = {}
+    # ----------------------------------------------------------------
+    trans_options: _trans_options = {}
+    match_options: _match_options = {}
     try:
         for part, sdef in spattern.items():
             for opt in sdef.values():
                 if isinstance(opt, dict) and "replace" in opt:
-                    for replace in opt["replace"]: # Replacing variables in replace option
+                    for replace in opt["replace"]:  # Replacing variables in replace option
                         replace[0] = addvar(variables, replace[0])
-            regex = comp(addvar(variables, sdef["regex"]))# Compiled regex without variables
+            regex = comp(addvar(variables, sdef["regex"]))  # Compiled regex without variables
             tokens = tuple(sdef["tokens"])  # Token_names
             if regex.groups != len(tokens):
                 if regex.groups == 0 and len(tokens) < 2:
@@ -238,10 +239,10 @@ def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_ou
                     print("Token Names:", len(tokens), "Capture Groups:", regex.groups)
                     exit(error_msg
                          + " Number of token names is not equal to number of capture groups"
-                    )
-            unmatches, defaults, tknopns = tknoptions(sdef, collections,variables)
-            if m:=var_rgx.search(regex.pattern):
-                print(Fore.YELLOW+"Warning:",m.group(),"not found")
+                         )
+            unmatches, defaults, tknopns = tknoptions(sdef, collections, variables)
+            if m := var_rgx.search(regex.pattern):
+                print(Fore.YELLOW + "Warning:", m.group(), "not found")
             match_options[part] = (
                 regex,
                 tokens,
@@ -250,9 +251,9 @@ def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_ou
                     unmatches,
                     (  # Unmatch regexs for part
                         tuple([
-                                comp(addvar(variables, unmatch))
-                                for unmatch in sdef["unmatch"]
-                            ])
+                            comp(addvar(variables, unmatch))
+                            for unmatch in sdef["unmatch"]
+                        ])
                         if "unmatch" in sdef
                         else ()
                     ),
@@ -267,16 +268,16 @@ def extract(spattern:_any)->tuple[_after,tuple[_match_options,_trans_options,_ou
         exit(f"Part:{part}")
     except KeyError as err:  # For part without regex or tokens
         exit(f"{error_msg} {err} not found in {part}")
-    return after,(match_options,trans_options,(outside if errfile else None))
+    return after, (match_options, trans_options, (outside if errfile else None))
 
 
-def err_report(part: str, msg: str, name: str, match:Match, 
+def err_report(part: str, msg: str, name: str, match: Match,
                tkns: dict, content: str, matchstr: str):
-    """Shows error messages for Syntax Errors."""
+    """Shows error messages for syntax errors."""
     pos, l, indexed = getotalines(content.splitlines(), matchstr)
     err_part = match.group()
     if part:  # Part Name
-        print(f"[{Fore.MAGENTA+part+Fore.RESET}]")
+        print(f"[{Fore.MAGENTA + part + Fore.RESET}]")
     line = indexed[0].lstrip()
     lineno = str(pos + 1) + " |"
     # error Line
@@ -291,8 +292,8 @@ def err_report(part: str, msg: str, name: str, match:Match,
     exit()
 
 
-def matching(content: str, match_options: _match_options, isrecursion: bool
-    ) -> dict[str, list[tuple[str, dict[str, str]]]]:
+def matching(content: str, match_options: _match_options,
+             isrecursion: bool) -> dict[str, list[tuple[str, dict[str, str]]]]:
     """
     Matches parts of source code.
 
@@ -315,11 +316,11 @@ def matching(content: str, match_options: _match_options, isrecursion: bool
                 matching.oncedone.append(part)
         partmatch = []  # Part matching
         for match in pattern.finditer(content):
-            matchstr:str = match.group()
+            matchstr: str = match.group()
             if unpart and any((bool(rgx.search(matchstr)) for rgx in unpart)):
                 continue
             match = {  # Assigning default value for None
-                tkname: (m if m != None else defaults.get(tkname, ""))
+                tkname: (m if m is not None else defaults.get(tkname, ""))
                 for tkname, m in zip(tknames, match.groups())
             }
             if err:  # If error definition exists
@@ -327,17 +328,17 @@ def matching(content: str, match_options: _match_options, isrecursion: bool
                     err_match = error["regex"].search(matchstr)
                     if err_match:
                         err_report(
-                            part,error["msg"],name,
-                            err_match,match,
-                            content,matchstr,
+                            part, error["msg"], name,
+                            err_match, match,
+                            content, matchstr,
                         )
                         # Token names and matched tokens
             if untkn and any(
-                (  # Checking unmatch on every token
-                    bool(rgx.search(match))
-                    for match, tkname in match.items()
-                    for rgx in untkn.get(tkname, ())
-                )
+                    (  # Checking unmatch on every token
+                            bool(rgx.search(match))
+                            for match, tkname in match.items()
+                            for rgx in untkn.get(tkname, ())
+                    )
             ):
                 continue
             partmatch.append((matchstr, match))
@@ -345,24 +346,25 @@ def matching(content: str, match_options: _match_options, isrecursion: bool
             partmatches.update({part: partmatch})
     return partmatches
 
+
 matching.oncedone = []  # List of "once: True" parts that are already matched
 
 
 def outside_err(outside: _outside, content: str):
-    "Find syntax errors in the source code and show error messages."
+    """Finds syntax errors in the source code and shows error messages."""
     for part, errors in outside.items():
         for name, error in errors.items():
             err_match = error["regex"].search(content)
             if err_match:
-                err_report(part,error.get("msg", ""),name,err_match,
-                           {},content,err_match.group())
+                err_report(part, error.get("msg", ""), name, err_match,
+                           {}, content, err_match.group())
 
 
-def convert(yaml_details:_yaml_details ,content: str,
-            isrecursion: bool = False,donly: Union[tuple[str, ...]]=()
-    ):
+def convert(yaml_details: _yaml_details, content: str,
+            isrecursion: bool = False, donly: Union[tuple[str, ...]] = ()
+            ):
     """
-    This is the main function that converts new syntax to orignal syntax.
+    This is the main function that converts new syntax to original syntax.
 
     :param content: Code with the new syntax.
     :param yaml_details: Details extracted from yaml files.
@@ -398,15 +400,15 @@ def convert(yaml_details:_yaml_details ,content: str,
                 for tkname, match in tknmatch.items():
                     if tkname not in tknopts:
                         continue
-                    opts = tknopts[tkname]# Token options
+                    opts = tknopts[tkname]  # Token options
                     for opn in opts:
-                        if opn == "replace":# For replace option
-                            replaces =  opts['replace']
+                        if opn == "replace":  # For replace option
+                            replaces = opts['replace']
                             from re import sub
-                            for rgx,replace in replaces:  # data-match and replace
-                                match = sub(rgx,replace, match)
+                            for rgx, replace in replaces:  # data-match and replace
+                                match = sub(rgx, replace, match)
                         elif opn == "call":
-                            calls =  opts['call']
+                            calls = opts['call']
                             match = re_convert(content=match, donly=calls)
                         elif opn == "eachline":  # For oneachline option
                             line = opts['eachline']
@@ -431,14 +433,14 @@ def convert(yaml_details:_yaml_details ,content: str,
 
 
 def getotalines(lines: list[str], substring: str):
-    "Find line in which the substring is located."
+    """Finds line in which the substring is located."""
     sublines = substring.splitlines()
     sublen = len(sublines)
     for pos, line in enumerate(lines):
         if sublines[0] in line:  # If first line matched
             if pos >= (len(lines) - sublen):  # If reached end of string
                 return
-            indexed = lines[pos : pos + sublen]  # rest of line
+            indexed = lines[pos: pos + sublen]  # rest of line
             for linepart, subline in zip(indexed, sublines[1:]):  # Check rest of line
                 if subline not in linepart:  # Break if subline not matched
                     break
@@ -449,7 +451,7 @@ def getotalines(lines: list[str], substring: str):
     return pos, sublen, indexed  # dict(zip(sublines,indexed))
 
 
-def load_yaml(file: str)->dict[str,Any]:
+def load_yaml(file: str) -> dict[str, Any]:
     """
     Loads yaml files.
 
@@ -472,7 +474,7 @@ def load_yaml(file: str)->dict[str,Any]:
         exit(f"{error_msg} {file} not found")
 
 
-def grab(source: str, target: str)->tuple[_after,_yaml_details]:
+def grab(source: str, target: str) -> tuple[_after, _yaml_details]:
     """
     Gets details from source and target yaml files.
 
@@ -502,9 +504,9 @@ def grab(source: str, target: str)->tuple[_after,_yaml_details]:
     return after, (rest, tpattern)
 
 
-def grab_var(file: str)->_var:
+def grab_var(file: str) -> _var:
     """
-    Load variables from external file.
+    Loads variables from an external file.
 
     :param file: Address of the external file.
     :return: Dictionary of variables.
@@ -519,8 +521,8 @@ def grab_var(file: str)->_var:
     return variables
 
 
-def get_ltz(filename: str)->tuple[_after,_yaml_details]:
-    "Load compiled yaml_details in the format .ltz"
+def get_ltz(filename: str) -> tuple[_after, _yaml_details]:
+    """Loads compiled yaml_details in the .ltz format. """
     from pickle import load
 
     try:
@@ -585,10 +587,11 @@ if __name__ == "__main__":
             argv.remove("-y")
         if no:
             argv.remove("-n")
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         if "-c" in argv:  # Compile into ltz
             from pickle import dump, HIGHEST_PROTOCOL
             from re import compile, error as rerror
+
             var_rgx = compile(r"<\w+>")
             argv[-1] += ".ltz"
             dump(
@@ -604,6 +607,7 @@ if __name__ == "__main__":
             exit()
         else:
             from re import compile, error as rerror
+
             var_rgx = compile(r"<\w+>")
             yaml_details = grab(argv[3], argv[4])
         # -------------------------------------------------------------------
@@ -616,7 +620,7 @@ if __name__ == "__main__":
         if verbose:
             print(targetcode)
         # For after command in settings
-        if not (no) and after:  # Not None
+        if not no and after:  # Not None
             if isinstance(after, dict):  # After command for different OS
                 from platform import system as systm
 
@@ -645,4 +649,4 @@ if __name__ == "__main__":
             if inp.lower() != "n":
                 system(after)
     except Exception as err:
-        print(Fore.RED+"Program Error:", err)
+        print(Fore.RED + "Program Error:", err)
