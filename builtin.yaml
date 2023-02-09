@@ -1,8 +1,10 @@
 bracket: \((.+)\) # Get content inside bracket
+
 operator: ~(?:\+|-|\*|\\)~ # Arithmetic operators
 
 #To match indented code
 ind: (\n(?:((?:\t|\s)+)).*(?:(?:\n\ # For multiline
+
 ent: .*)*\n*)*) # End line
 #It give two tokens(1-indented code,2-tab used for indentation)
 #Usage: <ind>No of tokens before+2<ent>
@@ -11,3 +13,11 @@ ent: .*)*\n*)*) # End line
 #tokens: [funame,args,code,tab]
 
 tab: ^((?:\t|\s)*) # Match tab/space
+
+indentation: (\t|\s) # Indentation characters
+
+number: (\d+(?:\.\d+)?) # Match numbers
+
+string: ("(?:[^"\\]|\\.)*") # Match double-quoted strings
+
+comment: (#[^\n]*) # Match single-line comments
