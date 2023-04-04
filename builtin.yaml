@@ -21,3 +21,10 @@ number: (\d+(?:\.\d+)?) # Match numbers
 string: ("(?:[^"\\]|\\.)*") # Match double-quoted strings
 
 comment: (#[^\n]*) # Match single-line comments
+
+email: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$ # Match email address
+
+date: ^\d{4}-\d{2}-\d{2}$ # Match date with the format YYYY-MM-DD
+# YYYY - 4 digit year
+# MM - 2 digit month
+# DD - 2 digit day of the month
