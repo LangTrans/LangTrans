@@ -16,6 +16,7 @@ from sys import argv, exit
 from functools import partial
 from typing import Any, Match, Pattern, TypedDict, Union, Optional
 from colorama import init, Fore
+from logging import getLogger
 
 # Types------------------------------
 Pattern = Pattern[str]  # Compiled Regex
@@ -56,6 +57,8 @@ _var = dict[str, str]
 #  For colored error - Intialiazing colorama
 init(autoreset=True)
 error_msg = Fore.RED + "Error:"
+# Instantication through module function
+logger = getLogger("Logger")
 
 
 def comp(regex: str) -> Pattern:
@@ -66,11 +69,11 @@ def comp(regex: str) -> Pattern:
     try:  # re.MULTILINE=8
         return compile(regex, 8)
     except rerror as err:
-        print(error_msg, "Invalid regex")
-        print(err.msg)
-        print("Regex:", regex.replace("\n", r"\n") \
+        logger.error(error_msg, "Invalid regex")
+        logger.error(err.msg)
+        logger.error("Regex:", regex.replace("\n", r"\n") \
               .replace("\t", r"\t"))
-        print(" " * (err.pos + 7) + "^")
+        logger.error(" " * (err.pos + 7) + "^")
         raise err
 
 
@@ -125,7 +128,7 @@ def tknoptions(sdef: dict[str, Any], collections: _collections, variables: _var
                             for reprgx in data
                         ])
                     except rerror as err:
-                        print(f"Location: Replace option for token({tkname})")
+                        logger.error(f"Location: Replace option for token({tkname})")
                         raise err
                 elif opn == "call":
                     opns["call"] = check_collections(data, collections)
@@ -135,18 +138,18 @@ def tknoptions(sdef: dict[str, Any], collections: _collections, variables: _var
                     try:  # Compiling regex
                         unmatches[tkname] = tuple([comp(addvar(variables, rgx)) for rgx in data])
                     except rerror as err:
-                        print(f"Location: Unmatch for token({tkname})")
+                        logger.error(f"Location: Unmatch for token({tkname})")
                         raise err
                 elif opn == "default":
                     defaults[tkname] = data
             if "," in tkname:  # Spliting Token options
                 for tk in tkname.split(","):
                     if tk not in tkns:
-                        return print(f"Error: {tk} not found in tokens")  # TypeError
+                        return logger.error(f"Error: {tk} not found in tokens")  # TypeError
                     trans_option[tk] = opns
                 continue
             if tkname not in tkns:
-                return print(f"{error_msg} {tkname} not found in tokens")  # TypeError
+                return logger.error(f"{error_msg} {tkname} not found in tokens")  # TypeError
             trans_option[tkname] = opns
             # Next Options
     return (
@@ -235,14 +238,14 @@ def extract(spattern: _any) -> tuple[_after, tuple[_match_options, _trans_option
                 if regex.groups == 0 and len(tokens) < 2:
                     regex = comp(f"({regex.pattern})")
                 else:
-                    print("Part:", part)
-                    print("Token Names:", len(tokens), "Capture Groups:", regex.groups)
+                    logger.error("Part:", part)
+                    logger.error("Token Names:", len(tokens), "Capture Groups:", regex.groups)
                     exit(error_msg
                          + " Number of token names is not equal to number of capture groups"
                          )
             unmatches, defaults, tknopns = tknoptions(sdef, collections, variables)
             if m := var_rgx.search(regex.pattern):
-                print(Fore.YELLOW + "Warning:", m.group(), "not found")
+                logger.warning(Fore.YELLOW + "Warning:", m.group(), "not found")
             match_options[part] = (
                 regex,
                 tokens,
@@ -277,18 +280,18 @@ def err_report(part: str, msg: str, name: str, match: Match,
     pos, l, indexed = getotalines(content.splitlines(), matchstr)
     err_part = match.group()
     if part:  # Part Name
-        print(f"[{Fore.MAGENTA + part + Fore.RESET}]")
+        logger.info(f"[{Fore.MAGENTA + part + Fore.RESET}]")
     line = indexed[0].lstrip()
     lineno = str(pos + 1) + " |"
     # error Line
-    print(Fore.CYAN + lineno, line.replace(err_part, Fore.RED + err_part + Fore.RESET))
+    logger.error(Fore.CYAN + lineno, line.replace(err_part, Fore.RED + err_part + Fore.RESET))
     total_msg = addvar(  # Replacing variables in main and err match
         {"$" + str(l): tkn for l, tkn in enumerate(match.groups(), start=1)},  # Err
         addvar(tkns, msg),  # Main
     )
     # Error Name
-    print(" " * (line.index(err_part) + len(lineno)), Fore.RED + name.replace("_", " "))
-    print(Fore.YELLOW + total_msg)  # Error Info
+    logger.error(" " * (line.index(err_part) + len(lineno)), Fore.RED + name.replace("_", " "))
+    logger.error(Fore.YELLOW + total_msg)  # Error Info
     exit()
 
 
@@ -383,8 +386,8 @@ def convert(yaml_details: _yaml_details, content: str,
         if not partsmatches:  # Break when no match found
             break
         elif lopcount > 100:
-            print(error_msg + " Loop Limit Exceded")
-            print(
+            logger.error(error_msg + " Loop Limit Exceded")
+            logger.error(
                 "Bug Locations:\n",
                 "\n".join(
                     (f"{part}:{matches}" for part, matches in partsmatches.items())
@@ -428,7 +431,7 @@ def convert(yaml_details: _yaml_details, content: str,
                 try:
                     content = content.replace(partmatch, temp_pattern)
                 except Exception:
-                    print(temp_pattern)
+                    logger.error(temp_pattern)
     return content
 
 
@@ -466,9 +469,9 @@ def load_yaml(file: str) -> dict[str, Any]:
     try:
         return load(open(file).read(), Loader=SafeLoader)
     except (ScannerError, ParserError) as err:  # Error message for Invalid Yaml File
-        print(error_msg, file, "is invalid")
-        print(err.problem, err.context)
-        print(err.problem_mark.get_snippet())
+        logger.error(error_msg, file, "is invalid")
+        logger.error(err.problem, err.context)
+        logger.error(err.problem_mark.get_snippet())
         exit()
     except FileNotFoundError:
         exit(f"{error_msg} {file} not found")
@@ -533,7 +536,7 @@ def get_ltz(filename: str) -> tuple[_after, _yaml_details]:
 
 def doc(file: str):
     """
-    Prints documentation of the part in yaml file.
+    Logging documentation of the part in yaml file.
     CommandLine: python langtrans.py -d source
 
     :param file: Address of the file.
@@ -542,9 +545,9 @@ def doc(file: str):
     if "settings" in yaml:
         settings = yaml["settings"]
         if "lang" in settings:
-            print("Language:", settings["lang"])
+            logger.info("Language:", settings["lang"])
         if "author" in settings:
-            print("Author:", settings["author"])
+            logger.info("Author:", settings["author"])
         del yaml["settings"]
     docs = []
     p = t = 7
@@ -560,9 +563,9 @@ def doc(file: str):
             p = len(part)
         if len(tkns) > t:
             t = len(tkns)
-    print("Part", " " * (p - 5), "Tokens", " " * (t - 7), "About")
+    logger.info("Part", " " * (p - 5), "Tokens", " " * (t - 7), "About")
     for part, tkns, about in docs:
-        print(
+        logger.info(
             part + " " * (p - len(part)),
             tkns + " " * (t - len(tkns)),
             about.replace("\n", "\n" + " " * (p + t + 2)),
@@ -571,7 +574,7 @@ def doc(file: str):
 
 if __name__ == "__main__":
     if len(argv) == 1 or (len(argv) == 2 and argv[1] == "-h"):
-        print("Arg usage: <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
+        logger.info("Arg usage: <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
         exit("SyntaxRepr,PatternRepr: without extension(.yaml)")
     elif len(argv) < 3:
         exit(error_msg + " Insufficient number of arguments")
@@ -597,7 +600,7 @@ if __name__ == "__main__":
             dump(
                 grab(argv[2], argv[3]), open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL
             )
-            print(Fore.GREEN + "Compiled successfully")
+            logger.info(Fore.GREEN + "Compiled successfully")
             exit("File saved as " + argv[-1])
         elif "-f" in argv:  # Run compiled ltz
             argv.remove("-f")
@@ -616,9 +619,9 @@ if __name__ == "__main__":
         re_convert = partial(convert, yaml_details=yaml_details, isrecursion=True)
         targetcode = convert(yaml_details, content)
         open(argv[2], "w").write(targetcode)
-        print(Fore.GREEN, "Saved as", argv[2])
+        logger.info(Fore.GREEN, "Saved as", argv[2])
         if verbose:
-            print(targetcode)
+            logger.info(targetcode)
         # For after command in settings
         if not no and after:  # Not None
             if isinstance(after, dict):  # After command for different OS
@@ -626,7 +629,7 @@ if __name__ == "__main__":
 
                 osname = systm().lower()  # Current os name
                 if osname not in after:
-                    print(
+                    logger.error(
                         f"{error_msg} No after command for {osname}. OS name eg. linux, windows"
                     )
                     exit()
@@ -644,9 +647,9 @@ if __name__ == "__main__":
             if yes:
                 system(after)
                 exit()
-            print("\nEnter to run and n to exit\nCommand:", after)
+            logger.info("\nEnter to run and n to exit\nCommand:", after)
             inp = input()
             if inp.lower() != "n":
                 system(after)
     except Exception as err:
-        print(Fore.RED + "Program Error:", err)
+        logger.error(Fore.RED + "Program Error:", err)
