@@ -464,7 +464,8 @@ def load_yaml(file: str) -> dict[str, Any]:
 
     file += ".yaml"
     try:
-        return load(open(file).read(), Loader=SafeLoader)
+    	with open(file) as yamlFile:
+        	return load(yamlFile.read(), Loader=SafeLoader)
     except (ScannerError, ParserError) as err:  # Error message for Invalid Yaml File
         print(error_msg, file, "is invalid")
         print(err.problem, err.context)
@@ -526,7 +527,8 @@ def get_ltz(filename: str) -> tuple[_after, _yaml_details]:
     from pickle import load
 
     try:
-        return load(open(filename + ".ltz", "rb"))
+        with open(filename + ".ltz", "rb") as litzFile:
+        	return load(litzFile)
     except FileNotFoundError as err:
         exit(f"{error_msg} {err.filename} not found")
 
@@ -594,9 +596,10 @@ if __name__ == "__main__":
 
             var_rgx = compile(r"<\w+>")
             argv[-1] += ".ltz"
-            dump(
-                grab(argv[2], argv[3]), open(argv[-1], "wb"), protocol=HIGHEST_PROTOCOL
-            )
+            with open(argv[-1], "wb") as litzFile:
+	            dump(
+	                grab(argv[2], argv[3]), litzFile, protocol=HIGHEST_PROTOCOL
+	            )
             print(Fore.GREEN + "Compiled successfully")
             exit("File saved as " + argv[-1])
         elif "-f" in argv:  # Run compiled ltz
@@ -612,10 +615,12 @@ if __name__ == "__main__":
             yaml_details = grab(argv[3], argv[4])
         # -------------------------------------------------------------------
         after, yaml_details = yaml_details
-        content = open(argv[1]).read()
+        with open(argv[1]) as InputFile:
+        	content = InputFile.read()
         re_convert = partial(convert, yaml_details=yaml_details, isrecursion=True)
         targetcode = convert(yaml_details, content)
-        open(argv[2], "w").write(targetcode)
+        with open(argv[2], "w") as OutputFile: 
+        	OutputFile.write(targetcode)
         print(Fore.GREEN, "Saved as", argv[2])
         if verbose:
             print(targetcode)
