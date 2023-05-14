@@ -59,7 +59,12 @@ error_msg = Fore.RED + "Error:"
 
 
 def comp(regex: str) -> Pattern:
-    """Compiles regular expression"""
+    """
+    Compiles regular expression.
+    
+    :param regex: Regular expression.
+    :return: Compiled regular expression.
+    """
     # To emulate tokens(in parsers)
     regex = regex.replace(" ", r"\s+") \
         .replace("~", r"\s*")
@@ -78,9 +83,9 @@ def check_collections(calls: list[str], collections: _collections) -> tuple[str,
     """
     This function adds collections to the call list.
 
-    :param calls: List with collection names and part names
-    :param collections: Dictionary of collections and its names
-    :return: Collection replaced call list
+    :param calls: List with collection names and part names.
+    :param collections: Dictionary of collections and its names.
+    :return: Collection replaced call list.
     """
     if not collections:
         return tuple(calls)
@@ -162,7 +167,7 @@ def addvar(variables: _var, rv: str):
     """
     This function replaces <varname> with its value.
 
-    :param variables: Dictionary of variables.
+    :param variables: Global variables.
     :param rv: String containing <varname>.
     :return: variable replaced string.
     """
@@ -433,7 +438,13 @@ def convert(yaml_details: _yaml_details, content: str,
 
 
 def getotalines(lines: list[str], substring: str):
-    """Finds line in which the substring is located."""
+    """
+    Finds line in which the substring is located.
+    
+    :param lines: List with lines of code being checked for substring.
+    :param substring: Substring to be found in lines.
+    :return: Lines where the substring is located or nothing if no match is found.
+    """
     sublines = substring.splitlines()
     sublen = len(sublines)
     for pos, line in enumerate(lines):
@@ -523,7 +534,12 @@ def grab_var(file: str) -> _var:
 
 
 def get_ltz(filename: str) -> tuple[_after, _yaml_details]:
-    """Loads compiled yaml_details in the .ltz format. """
+    """
+    Loads compiled yaml_details in the .ltz format. 
+    
+    :param filename: Name of the file.
+    :return: yaml_details in the .ltz format.
+    """
     from pickle import load
 
     try:
@@ -536,7 +552,7 @@ def get_ltz(filename: str) -> tuple[_after, _yaml_details]:
 def doc(file: str):
     """
     Prints documentation of the part in yaml file.
-    CommandLine: python langtrans.py -d source
+    CommandLine: python langtrans.py -d source.
 
     :param file: Address of the file.
     """
