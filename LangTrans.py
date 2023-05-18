@@ -535,10 +535,10 @@ def grab_var(file: str) -> _var:
 
 def get_ltz(filename: str) -> tuple[_after, _yaml_details]:
     """
-    Loads compiled yaml_details in the .ltz format. 
+    Loads compiled yaml_details from .ltz file. 
     
     :param filename: Name of the file.
-    :return: yaml_details in the .ltz format.
+    :return: yaml_details from .ltz file.
     """
     from pickle import load
 
