@@ -1,3 +1,4 @@
+---
 bracket: \((.+)\) # Get content inside bracket
 
 operator: ~(?:\+|-|\*|\\)~ # Arithmetic operators
