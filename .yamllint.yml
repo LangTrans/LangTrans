@@ -5,6 +5,9 @@ yaml-files:
   - "*.yml"
 
 rules:
+  comments: disable
   colons:
     level: warning
+  document-start: disable
+  line-length: disable
   new-lines: disable

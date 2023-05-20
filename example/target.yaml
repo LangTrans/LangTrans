@@ -1,4 +1,3 @@
----
 pipe: <tab><f1>(<f2>)
 arrow_fun: "<name> = lambda <args>:<statement>"
 arrow: "lambda <arg>: <statement>"

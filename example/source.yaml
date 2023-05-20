@@ -1,12 +1,9 @@
----
 scope:
   regex: <tab>#(<var>)#(<lines>)$
   tokens: [tab, name, statement]
   statement:
     eachline: <tab> <line>
-  doc: "\
-    Implentation of scope(like in javascript)\
-    (Syntax:#name#<statement_in_new_line>)"
+  doc: "Implentation of scope(like in javascript)(Syntax:#name#<statement_in_new_line>)"
 
 notdefined:
   regex: (<var>)\s*\|\|\s*(.+)(?:$|\))
@@ -83,8 +80,7 @@ single_try:
 itself:
   regex: <tab>=(<var>)\.(.+)$
   tokens: [tab, var, rest]
-  doc: "\
-    Assign return value to same variable after operation(=variable.function())"
+  doc: "Assign return value to same variable after operation(=variable.function())"
 
 ternary:
   regex: (=\s*|\()(.+)\?(.+):(.+)($|\))
