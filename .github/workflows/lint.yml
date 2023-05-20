@@ -22,6 +22,8 @@ jobs:
           pip install yamllint
       # - name: Lint builtin
       #   run: yamllint builtin.yml
+      - name: Lint
+        run: pwd
       - name: Lint example
         run: yamllint source.yml target.yml
         working-directory: example
