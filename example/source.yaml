@@ -4,7 +4,9 @@ scope:
   tokens: [tab, name, statement]
   statement:
     eachline: <tab> <line>
-  doc: Implentation of scope(like in javascript)(Syntax:#name#<statement_in_new_line>)
+  doc: "\
+    Implentation of scope(like in javascript)\
+    (Syntax:#name#<statement_in_new_line>)"
 
 notdefined:
   regex: (<var>)\s*\|\|\s*(.+)(?:$|\))
@@ -81,7 +83,8 @@ single_try:
 itself:
   regex: <tab>=(<var>)\.(.+)$
   tokens: [tab, var, rest]
-  doc: Assign return value to same variable after operation(=variable.function())
+  doc: "\
+    Assign return value to same variable after operation(=variable.function())"
 
 ternary:
   regex: (=\s*|\()(.+)\?(.+):(.+)($|\))
@@ -97,7 +100,7 @@ condition:
   tokens: [tab, name, args, bol]
   doc: Call function if expression is true(function() if expression)
 
-#Some Haskell Syntax
+# Some Haskell Syntax
 jrange:
   regex: (\d+),(\d+)\.\.(\d+)
   tokens: [jump, start, end]
@@ -110,7 +113,7 @@ range:
   comma:
     replace:
       - ["^,", ",*"]
-#-----------------------
+# -----------------------
 listrange:
   regex: "!\\[(.+)\\]"
   tokens: [inside]
@@ -172,8 +175,8 @@ settings:
     args: \((<spvar>(?:,<spvar>)*)\) # To get arguments
     i1: (\n(?:(?:(?:\t|\s)+)+?).*(?:(?:\n\\ # For multiline
     i2: .*)*\n*)*) # End multline
-    op: (?:\+|-|\*|\\) #Arthematic Operators
-    narrow: ((?:(?!\s*->).)+) #Not arrow
+    op: (?:\+|-|\*|\\) # Arthematic Operators
+    narrow: ((?:(?!\s*->).)+) # Not arrow
     line: (?:\n.+) # For single line
     lines: <line>+ # For multiple lines
     # To get indentation level and block of statements

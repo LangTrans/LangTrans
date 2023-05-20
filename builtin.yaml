@@ -7,11 +7,11 @@ operator: ~(?:\+|-|\*|\\)~ # Arithmetic operators
 ind: (\n(?:((?:\t|\s)+)).*(?:(?:\n\ # For multiline
 
 ent: .*)*\n*)*) # End line
-#It give two tokens(1-indented code,2-tab used for indentation)
-#Usage: <ind>No of tokens before+2<ent>
-#Example
-#regex: fun (\w+)<bracket>:<ind>4<ent>
-#tokens: [funame,args,code,tab]
+# It give two tokens(1-indented code,2-tab used for indentation)
+# Usage: <ind>No of tokens before+2<ent>
+# Example
+# regex: fun (\w+)<bracket>:<ind>4<ent>
+# tokens: [funame,args,code,tab]
 
 tab: ^((?:\t|\s)*) # Match tab/space
 
