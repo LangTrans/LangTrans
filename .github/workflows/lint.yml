@@ -20,10 +20,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install yamllint
-      # - name: Lint builtin
-      #   run: yamllint builtin.yml
-      - name: Lint
-        run: ls
+      - name: Lint builtin
+        run: yamllint builtin.yaml
       - name: Lint example
-        run: yamllint source.yml target.yml
+        run: yamllint source.yaml target.yaml
         working-directory: example
