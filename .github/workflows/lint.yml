@@ -23,7 +23,7 @@ jobs:
       # - name: Lint builtin
       #   run: yamllint builtin.yml
       - name: Lint
-        run: pwd
+        run: ls
       - name: Lint example
         run: yamllint source.yml target.yml
         working-directory: example
