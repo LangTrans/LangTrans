@@ -9,6 +9,7 @@
 [![Discord](https://img.shields.io/discord/802179593293267006?style=flat-square&logo=discord)](https://discord.gg/3nDwppur5)
 [![Docs](https://img.shields.io/badge/Gitbook-docs-lightgrey?style=flat-square&logo=gitbook&logoColor=white)](https://bijinregipanicker.gitbook.io/langtrans/)
 [![License](https://img.shields.io/github/license/B-R-P/langtrans?style=flat-square&logo=open-source-initiative)](https://raw.githubusercontent.com/B-R-P/LangTrans/main/LICENSE)
+[![myPy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
 LangTrans is a syntactic preprocessor that allows you to customize the syntax of any programming language. It operates by translating your custom syntax into the original language syntax, enabling you to write code in a manner that suits your style, while still conforming to the programming language's specifications. It employs regular expressions to extract tokens from your custom language and uses these tokens to generate a representation of the original language syntax.
 
