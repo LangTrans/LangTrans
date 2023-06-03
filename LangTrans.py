@@ -778,41 +778,54 @@ def load_compiled_yaml_details(
         exit()
 
 
-def doc(file: str):
+def print_yaml_documentation(source_file: str) -> None:
     """
     Prints documentation of the part in yaml file.
     CommandLine: python langtrans.py -d source.
 
-    :param file: Address of the file.
+    :param file: Path of the file.
+    :type file: str
+
+    :return: None
     """
-    yaml = load_yaml_file(file)
-    if "settings" in yaml:
-        settings = yaml["settings"]
+    yaml_content = load_yaml_file(source_file)
+
+    if "settings" in yaml_content:
+        settings = yaml_content["settings"]
         if "lang" in settings:
             print("Language:", settings["lang"])
         if "author" in settings:
             print("Author:", settings["author"])
-        del yaml["settings"]
-    docs = []
-    p = t = 7
-    for part in yaml:
-        tkns = str(yaml[part]["tokens"])
-        for i in "'[] ":
-            tkns = tkns.replace(i, "")
-        about = ""
-        if "doc" in yaml[part]:
-            about += yaml[part]["doc"]
-        docs.append((part, tkns, about))
-        if len(part) > p:
-            p = len(part)
-        if len(tkns) > t:
-            t = len(tkns)
-    print("Part", " " * (p - 5), "Tokens", " " * (t - 7), "About")
-    for part, tkns, about in docs:
+        del yaml_content["settings"]
+
+    documentation_list = []
+    longest_part_length = longest_tokens_length = 7
+
+    for part, details in yaml_content.items():
+        tokens_str = (
+            str(details.get("tokens", ""))
+            .replace("[", "")
+            .replace("]", "")
+            .replace("'", "")
+            .replace(" ", "")
+        )
+        about = details.get("doc", "")
+
+        documentation_list.append((part, tokens_str, about))
+
+        if len(part) > longest_part_length:
+            longest_part_length = len(part)
+        if len(tokens_str) > longest_tokens_length:
+            longest_tokens_length = len(tokens_str)
+
+    print(f"{'Part':<{longest_part_length}} {'Tokens':<{longest_tokens_length}} About")
+
+    for part, tokens_str, about in documentation_list:
+        about_with_indentation = about.replace(
+            "\n", "\n" + " " * (longest_part_length + longest_tokens_length + 2)
+        )
         print(
-            part + " " * (p - len(part)),
-            tkns + " " * (t - len(tkns)),
-            about.replace("\n", "\n" + " " * (p + t + 2)),
+            f"{part:<{longest_part_length}} {tokens_str:<{longest_tokens_length}} {about_with_indentation}"
         )
 
 
@@ -849,7 +862,7 @@ if __name__ == "__main__":
             argv.remove("-f")
             yaml_details = load_compiled_yaml_details(argv[-1])
         elif "-d" in argv:
-            doc(argv[-1])
+            print_yaml_documentation(argv[-1])
             exit()
         else:
             from re import compile, error as re_error
