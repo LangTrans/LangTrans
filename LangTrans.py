@@ -10,7 +10,7 @@ MIT License
 Copyright (c) 2021 Bijin Regi Panicker
 See LICENSE file for orginal text.
 """
-from os import system, name, path
+from os import system
 from os.path import dirname
 import os
 from sys import argv, exit
@@ -18,7 +18,8 @@ from functools import partial
 from typing import Any, Match, Pattern, Dict, Union, Optional, List, Tuple
 from colorama import init, Fore
 
-# Types------------------------------
+
+# Types ------------------------------
 _RegexPattern = Pattern[str]  # Compiled Regex
 _StringMatch = Match[str]  # Matched String
 _ErrorDetails = Dict[str, Union[_RegexPattern, str]]
@@ -56,8 +57,8 @@ _ErrorTokensDict = Dict[str, Union[str, int, float, bool]]
 _TargetStringLines = Optional[Tuple[int, int, List[str]]]
 _CompileErrorTuple = Tuple[Dict[str, _ErrorDictionary], _OutsideOptions]
 
-# -----------------------------------
-#  For colored error - Intialiazing colorama
+
+# Init Colorama -----------------------------------
 init(autoreset=True)
 error_msg = Fore.RED + "Error:"
 
@@ -74,8 +75,8 @@ def sanitize_regex(regex: str) -> _RegexPattern:
 
     :raises re.error: If the regular expression pattern is invalid.
 
-    It sanitizes the pattern by replacing spaces with `\s+` and `~` with `\s*` to allow
-    for optional whitespace. It then compiles the pattern and returns the compiled.
+    It sanitizes the pattern by replacing spaces and `~` with regex to allow for optional
+    whitespace. It then compiles the pattern and returns the compiled.
     """
 
     regex = regex.replace(" ", r"\s+").replace("~", r"\s*")
@@ -371,8 +372,8 @@ def extract(
 
     except (re_error, TypeError):  # Regex and unknown token option error
         exit(f"Part:{part}")
-    except KeyError as err:  # For part without regex or tokens
-        exit(f"{error_msg} {err} not found in {part}")
+    except KeyError as key_error:  # For part without regex or tokens
+        exit(f"{error_msg} {key_error} not found in {part}")
     return after, (match_options, trans_options, (outside if errfile else None))
 
 
@@ -736,34 +737,71 @@ def load_yaml_file(file: str) -> Dict[str, Any]:
         exit(f"{error_msg} {file} not found")
 
 
-def grab(source: str, target: str) -> Tuple[_AfterProcessing, _ParseYAMLDetails]:
+def extract_yaml_details(
+    source_path: str, target_path: str
+) -> Tuple[_AfterProcessing, _ParseYAMLDetails]:
     """
-    Gets details from source and target yaml files.
+    Extracts details from source and target YAML files.
 
-    :param argv: Array of arguments.
-    :param l: Location of the argument needed.
-    :return: The after command and yaml details.
+    :param source_path: The path to the source YAML file.
+    :param target_path: The path to the target YAML file.
+    :return: A tuple containing the after command and YAML details.
     """
-    spattern = load_yaml_file(source)
-    tpattern = load_yaml_file(target)
-    for part in spattern:  # Template checking
-        if not (part in tpattern or part == "settings"):
-            if part.startswith("_"):  # For parts with same pattern
-                bpart = part[2:]  # Base part
-                if bpart in spattern:  # Since template is same, tokens also same
-                    spattern[part]["tokens"] = spattern[bpart]["tokens"]
+    source_yaml = load_yaml_file(source_path)
+    target_yaml = load_yaml_file(target_path)
+
+    # Check if all parts in source YAML file have a corresponding part in target YAML file
+    for part in source_yaml:
+        if not (part in target_yaml or part == "settings"):
+            if part.startswith("_"):
+                base_part = part[2:]
+                if base_part in source_yaml:
+                    source_yaml[part]["tokens"] = source_yaml[base_part]["tokens"]
                 else:
-                    exit(f"{error_msg} {bpart} for {part} not found")
-                if bpart in tpattern:  # Template checking
-                    tpattern[part] = tpattern[bpart]
+                    raise ValueError(f"{error_msg} {base_part} for {part} not found")
+                if base_part in target_yaml:
+                    target_yaml[part] = target_yaml[base_part]
                     continue
-                part = bpart
-            if not spattern[part]["tokens"]:
-                tpattern[part] = ""
+                part = base_part
+            if not source_yaml[part]["tokens"]:
+                target_yaml[part] = ""
                 continue
-            exit(f"{error_msg} Template for {part} not found")
-    after, rest = extract(spattern)
-    return after, (rest, tpattern)
+            raise ValueError(f"{error_msg} Template for {part} not found")
+
+    after_command, yaml_details = extract(source_yaml)
+    return after_command, (yaml_details, target_yaml)
+
+
+# def extract_yaml_details(
+#     source: str, target: str
+# ) -> Tuple[_AfterProcessing, _ParseYAMLDetails]:
+#     """
+#     Gets details from source and target yaml files.
+
+#     :param argv: Array of arguments.
+#     :param l: Location of the argument needed.
+#     :return: The after command and yaml details.
+#     """
+#     spattern = load_yaml_file(source)
+#     tpattern = load_yaml_file(target)
+#     for part in spattern:  # Template checking
+#         if not (part in tpattern or part == "settings"):
+#             if part.startswith("_"):  # For parts with same pattern
+#                 bpart = part[2:]  # Base part
+#                 if bpart in spattern:  # Since template is same, tokens also same
+#                     spattern[part]["tokens"] = spattern[bpart]["tokens"]
+#                 else:
+#                     exit(f"{error_msg} {bpart} for {part} not found")
+#                 if bpart in tpattern:  # Template checking
+#                     tpattern[part] = tpattern[bpart]
+#                     continue
+#                 part = bpart
+#             if not spattern[part]["tokens"]:
+#                 tpattern[part] = ""
+#                 continue
+#             exit(f"{error_msg} Template for {part} not found")
+#     after, rest = extract(spattern)
+#     return after, (rest, tpattern)
 
 
 def load_variables(file_path: str) -> _VariablesDict:
@@ -801,8 +839,8 @@ def load_compiled_yaml_details(
     from pickle import load
 
     try:
-        with open(f"{filename}.ltz", "rb") as litzFile:
-            return load(litzFile)
+        with open(f"{filename}.ltz", "rb") as compiled_yaml:
+            return load(compiled_yaml)
     except FileNotFoundError as fnf_error:
         print(f"File {fnf_error.filename} not found.")
         exit()
@@ -855,9 +893,9 @@ def print_yaml_documentation(source_file: str) -> None:
         about_with_indentation = about.replace(
             "\n", "\n" + " " * (longest_part_length + longest_tokens_length + 2)
         )
-        print(
-            f"{part:<{longest_part_length}} {tokens_str:<{longest_tokens_length}} {about_with_indentation}"
-        )
+        print(f"{part:<{longest_part_length}}")
+        print(f"{tokens_str:<{longest_tokens_length}}")
+        print(f"{about_with_indentation}")
 
 
 if __name__ == "__main__":
@@ -868,15 +906,15 @@ if __name__ == "__main__":
         exit(error_msg + " Insufficient number of arguments")
     try:
         # Terminal Options-------------------------------------------
-        yes = "-y" in argv  # To run after command automatically
-        verbose = "-v" in argv  # Verbose Mode - print source code
-        no = "-n" in argv  # To exit without executing after command
+        YES = "-y" in argv  # To run after command automatically
+        VERBOSE = "-v" in argv  # Verbose Mode - print source code
+        NO = "-n" in argv  # To exit without executing after command
 
-        if verbose:
+        if VERBOSE:
             argv.remove("-v")
-        if yes:
+        if YES:
             argv.remove("-y")
-        if no:
+        if NO:
             argv.remove("-n")
         # ------------------------------------------------------------
         if "-c" in argv:  # Compile into ltz
@@ -885,8 +923,12 @@ if __name__ == "__main__":
 
             var_rgx = compile(r"<\w+>")
             argv[-1] += ".ltz"
-            with open(argv[-1], "wb") as litzFile:
-                dump(grab(argv[2], argv[3]), litzFile, protocol=HIGHEST_PROTOCOL)
+            with open(argv[-1], "wb") as litz_file:
+                dump(
+                    extract_yaml_details(argv[2], argv[3]),
+                    litz_file,
+                    protocol=HIGHEST_PROTOCOL,
+                )
             print(Fore.GREEN + "Compiled successfully")
             exit("File saved as " + argv[-1])
         elif "-f" in argv:  # Run compiled ltz
@@ -899,22 +941,22 @@ if __name__ == "__main__":
             from re import compile, error as re_error
 
             var_rgx = compile(r"<\w+>")
-            yaml_details = grab(argv[3], argv[4])
+            yaml_details = extract_yaml_details(argv[3], argv[4])
         # -------------------------------------------------------------------
         after, yaml_details = yaml_details
-        with open(argv[1]) as InputFile:
+        with open(argv[1], encoding="utf-8") as InputFile:
             content = InputFile.read()
         re_convert = partial(
             convert_syntax, extracted_yaml_details=yaml_details, is_recursive=True
         )
         targetcode = convert_syntax(yaml_details, content)
-        with open(argv[2], "w") as OutputFile:
+        with open(argv[2], "w", encoding="utf-8") as OutputFile:
             OutputFile.write(targetcode)
         print(Fore.GREEN, "Saved as", argv[2])
-        if verbose:
+        if VERBOSE:
             print(targetcode)
         # For after command in settings
-        if not no and after:  # Not None
+        if not NO and after:  # Not None
             if isinstance(after, Dict):  # After command for different OS
                 from platform import system as systm
 
@@ -935,7 +977,7 @@ if __name__ == "__main__":
             )
             for var, val in after_var:
                 after = after.replace(var, val)
-            if yes:
+            if YES:
                 system(after)
                 exit()
             print("\nEnter to run and n to exit\nCommand:", after)
