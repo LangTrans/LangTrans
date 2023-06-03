@@ -14,7 +14,18 @@ from os import system
 from os.path import dirname
 from sys import argv, exit
 from functools import partial
-from typing import Any, Match, Pattern, TypedDict, Union, Optional, List, Tuple
+from typing import (
+    Any,
+    Match,
+    Pattern,
+    TypedDict,
+    Union,
+    Optional,
+    List,
+    Tuple,
+    Dict,
+    Callable,
+)
 from colorama import init, Fore
 
 # Types------------------------------
@@ -52,6 +63,8 @@ _collections = Optional[dict[str, Optional[list[str]]]]
 _after = Optional[Union[list[str], str, dict[str, str]]]
 _any = dict[str, dict[str, Any]]
 _var = dict[str, str]
+_HandlerType = Callable[[Any, str, _collections, _var], Any]
+
 # -----------------------------------
 #  For colored error - Intialiazing colorama
 init(autoreset=True)
@@ -108,70 +121,100 @@ def check_collections(calls: list[str], collections: _collections) -> tuple[str,
     return tuple(new_collections)
 
 
-def tknoptions(
-    sdef: dict[str, Any], collections: _collections, variables: _var
-) -> tuple[_unmatches, dict[str, str], tuple[_tknopts, Optional[tuple[str, ...]]]]:
+def handle_eachline(option_data: Any) -> Any:
+    return option_data
+
+
+def handle_replace(option_data: list, token_name: str) -> tuple:
+    try:
+        return tuple(
+            (comp(replace_option[0]), replace_option[1])
+            if len(replace_option) == 2
+            else (comp(replace_option[0]), "")
+            for replace_option in option_data
+        )
+    except Exception as replace_error:
+        print(f"Location: Replace option for token({token_name})")
+        raise replace_error
+
+
+def handle_call(option_data: list, collections: _collections) -> tuple:
+    return check_collections(option_data, collections)
+
+
+def handle_unmatch(
+    option_data: Union[list, str], token_name: str, variables: _var
+) -> tuple:
+    if not isinstance(option_data, list):
+        option_data = [option_data]
+    try:
+        return tuple([comp(addvar(variables, regex)) for regex in option_data])
+    except Exception as unmatch_error:
+        print(f"Location: Unmatch for token({token_name})")
+        raise unmatch_error
+
+
+def handle_default(option_data: Any) -> Any:
+    return option_data
+
+
+OPTION_HANDLERS = {
+    "eachline": handle_eachline,
+    "replace": handle_replace,
+    "call": handle_call,
+    "unmatch": handle_unmatch,
+    "default": handle_default,
+}
+
+
+def extract_token_options(
+    specification: dict[str, Any], collections: _collections, variables: _var
+) -> Dict[str, Any]:
+    token_names = specification["tokens"]
+    token_options: Dict[str, Dict[str, Any]] = {}
+
+    for token_name, options in specification.items():
+        if isinstance(options, dict):
+            current_token_options: Dict[str, Any] = {}
+            for option_name, option_data in options.items():
+                handler = OPTION_HANDLERS.get(option_name)
+                if handler:
+                    current_token_options[option_name] = handler(
+                        option_data, token_name, collections, variables
+                    )  # type: ignore
+            token_options[token_name] = current_token_options
+
+        if "," in token_name:
+            for split_token_name in token_name.split(","):
+                if split_token_name not in token_names:
+                    raise ValueError(f"Error: {split_token_name} not found in tokens")
+                token_options[split_token_name] = token_options[token_name]
+
+        if token_name not in token_names:
+            raise ValueError(f"{error_msg} {token_name} not found in tokens")
+    return token_options
+
+
+def process_token_definitions(
+    specification: dict[str, Any], collections: _collections, variables: _var
+) -> Tuple[
+    Dict[str, Any], Dict[str, str], Tuple[Dict[str, Any], Optional[Tuple[str, ...]]]
+]:
     """
     This function extracts token options from a yaml file.
 
-    :param sdef: Contains token options.
+    :param specification: Contains token options.
     :param collections: Dictionary of collections and their names.
     :return: unmatches, default values, translation options, and next call list.
     """
-    trans_option: _tknopts = {}
-    unmatches: _unmatches = {}
-    defaults: dict[str, str] = {}
-    tkns: list = sdef["tokens"]
-    for tkname, opts in sdef.items():
-        if isinstance(opts, dict):
-            opns: _opts = {}
-            # Token options
-            for opn, data in opts.items():
-                if opn == "eachline":
-                    opns["eachline"] = data
-                elif opn == "replace":
-                    try:
-                        opns["replace"] = tuple(
-                            [
-                                (comp(reprgx[0]), reprgx[1])  # For replacing
-                                if len(reprgx) == 2
-                                else (comp(reprgx[0]), "")  # For removing
-                                for reprgx in data
-                            ]
-                        )
-                    except rerror as err:
-                        print(f"Location: Replace option for token({tkname})")
-                        raise err
-                elif opn == "call":
-                    opns["call"] = check_collections(data, collections)
-                elif opn == "unmatch":
-                    if not isinstance(data, list):
-                        data = (data,)
-                    try:  # Compiling regex
-                        unmatches[tkname] = tuple(
-                            [comp(addvar(variables, rgx)) for rgx in data]
-                        )
-                    except rerror as err:
-                        print(f"Location: Unmatch for token({tkname})")
-                        raise err
-                elif opn == "default":
-                    defaults[tkname] = data
-            if "," in tkname:  # Spliting Token options
-                for tk in tkname.split(","):
-                    if tk not in tkns:
-                        return print(f"Error: {tk} not found in tokens")  # TypeError
-                    trans_option[tk] = opns
-                continue
-            if tkname not in tkns:
-                return print(f"{error_msg} {tkname} not found in tokens")  # TypeError
-            trans_option[tkname] = opns
-            # Next Options
+    token_options = extract_token_options(specification, collections, variables)
+
     return (
-        unmatches,
-        defaults,
+        token_options.get("unmatch", {}),
+        token_options.get("default", {}),
         (
-            trans_option,
-            (check_collections(sdef["next"], collections) if "next" in sdef else None),
+            token_options,
+            check_collections(specification.get("next", []), collections),
         ),
     )
 
@@ -244,17 +287,17 @@ def extract(
     trans_options: _trans_options = {}
     match_options: _match_options = {}
     try:
-        for part, sdef in spattern.items():
-            for opt in sdef.values():
+        for part, specification in spattern.items():
+            for opt in specification.values():
                 if isinstance(opt, dict) and "replace" in opt:
                     for replace in opt[
                         "replace"
                     ]:  # Replacing variables in replace option
                         replace[0] = addvar(variables, replace[0])
             regex = comp(
-                addvar(variables, sdef["regex"])
+                addvar(variables, specification["regex"])
             )  # Compiled regex without variables
-            tokens = tuple(sdef["tokens"])  # Token_names
+            tokens = tuple(specification["tokens"])  # Token_names
             if regex.groups != len(tokens):
                 if regex.groups == 0 and len(tokens) < 2:
                     regex = comp(f"({regex.pattern})")
@@ -265,28 +308,31 @@ def extract(
                         error_msg
                         + " Number of token names is not equal to number of capture groups"
                     )
-            unmatches, defaults, tknopns = tknoptions(sdef, collections, variables)
+            unmatches, defaults, tknopns = process_token_definitions(
+                specification, collections, variables
+            )
             if m := var_rgx.search(regex.pattern):
                 print(Fore.YELLOW + "Warning:", m.group(), "not found")
             match_options[part] = (
                 regex,
                 tokens,
-                "global" not in sdef or sdef["global"],  # Checking Global
+                "global" not in specification
+                or specification["global"],  # Checking Global
                 (  # Unmatch regexs for tokens
                     unmatches,
                     (  # Unmatch regexs for part
                         tuple(
                             [
                                 comp(addvar(variables, unmatch))
-                                for unmatch in sdef["unmatch"]
+                                for unmatch in specification["unmatch"]
                             ]
                         )
-                        if "unmatch" in sdef
+                        if "unmatch" in specification
                         else ()
                     ),
                 ),
                 defaults,
-                "once" in sdef and sdef["once"],
+                "once" in specification and specification["once"],
                 (errfile[part] if errfile and part in errfile else None),
             )
             trans_options[part] = tknopns
