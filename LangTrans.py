@@ -564,82 +564,112 @@ def find_outside_errors(outside_options: _OutsideOptions, source_code: str) -> N
                     )
 
 
-def convert(
-    yaml_details: _ParseYAMLDetails,
-    content: str,
-    isrecursion: bool = False,
-    donly: Union[Tuple[str, ...]] = (),
-):
+def convert_syntax(
+    extracted_yaml_details: _ParseYAMLDetails,
+    original_content: str,
+    is_recursive: bool = False,
+    conversion_parts: Union[Tuple[str, ...]] = (),
+) -> str:
     """
-    This is the main function that converts new syntax to original syntax.
+    This function converts new syntax to original syntax as described in extracted_yaml_details.
 
-    :param content: Code with the new syntax.
-    :param yaml_details: Details extracted from yaml files.
-    :param isrecursion: A flag to check if there is a recursion call or not.
-    :param donly: parts that should only be converted(used during part calling).
-    :return: Return code with original syntax.
+    :param extracted_yaml_details: Extracted from yaml includes matching patterns
+    :type extracted_yaml_details: _ParseYAMLDetails
+
+    :param original_content: Original content in the new syntax that needs to be converted.
+    :type original_content: str
+
+    :param is_recursive: Boolean flag indicating if the conversion should be recursive.
+    :type is_recursive: bool
+
+    :param conversion_parts: Specific parts that need to be converted.
+    :type conversion_parts: Union[Tuple[str, ...]]
+
+    :return: The converted content in the original syntax.
+    :rtype: str
+
+    This function first matches the original content with the matching patterns in the
+    extracted_yaml_details. If a match is found, the corresponding transformation is applied to
+    the matched part. This process is repeated until no more matches are found.
     """
-    (match_options, trans_options, outside), tpattern = yaml_details
-    lopcount = 0
-    if isrecursion:
-        match_options = {part: match_options[part] for part in donly}
-    elif outside:  # Outside error checks
-        find_outside_errors(outside, content)
-    while 1:
-        partsmatches = matching(content, match_options, isrecursion)
-        if not partsmatches:  # Break when no match found
+    (
+        match_rules,
+        transform_rules,
+        outside_errors,
+    ), pattern_templates = extracted_yaml_details
+    iteration_count = 0
+
+    if is_recursive:
+        match_rules = {part: match_rules[part] for part in conversion_parts}
+    elif outside_errors:  # Outside error checks
+        find_outside_errors(outside_errors, original_content)
+
+    while True:
+        matched_parts = matching(original_content, match_rules, is_recursive)
+        if not matched_parts:  # Break when no match found
             break
-        elif lopcount > 100:
-            print(error_msg + " Loop Limit Exceded")
+        elif iteration_count > 100:
+            print(error_msg + " Loop Limit Exceeded")
             print(
                 "Bug Locations:\n",
                 "\n".join(
-                    (f"{part}:{matches}" for part, matches in partsmatches.items())
+                    (f"{part}:{matches}" for part, matches in matched_parts.items())
                 ),
             )
             exit()
-        lopcount += 1
-        for part, partmatches in partsmatches.items():
-            pattern = tpattern[part]
-            tknopts, next_optns = trans_options[part]
-            for partmatch, tknmatch in partmatches:
+        iteration_count += 1
+
+        for part, matches in matched_parts.items():
+            if pattern_templates is not None:
+                pattern = pattern_templates[part]
+            token_options, next_options = transform_rules[part]
+            for part_match, token_match in matches:
                 temp_pattern = pattern
-                for tkname, match in tknmatch.items():
-                    if tkname not in tknopts:
+                for token_name, match in token_match.items():
+                    if token_name not in token_options:
                         continue
-                    opts = tknopts[tkname]  # Token options
-                    for opn in opts:
-                        if opn == "replace":  # For replace option
-                            replaces = opts["replace"]
+                    opts = token_options[token_name]  # Token options
+                    for option in opts:
+                        if option == "replace":  # For replace option
+                            replacements = opts["replace"]
                             from re import sub
 
-                            for rgx, replace in replaces:  # data-match and replace
-                                match = sub(rgx, replace, match)
-                        elif opn == "call":
+                            replacements_tuple = (*replacements,)
+                            for (
+                                rgx,
+                                replacement,
+                            ) in replacements_tuple:  # pattern-match and replace
+                                match = sub(rgx, replacement, match)
+                        elif option == "call":
                             calls = opts["call"]
-                            match = re_convert(content=match, donly=calls)
-                        elif opn == "eachline":  # For oneachline option
+                            match = re_convert(
+                                original_content=match, conversion_parts=calls
+                            )
+                        elif option == "eachline":  # For eachline option
                             line = opts["eachline"]
+                            line_string = str(line)
                             match = "\n".join(
                                 [
-                                    line.replace("<line>", l)
+                                    line_string.replace("<line>", l)
                                     for l in match.split("\n")
                                     if l.strip() != ""
                                 ]
                             )
-                    tknmatch[tkname] = match
-                    # Replacing token names with its value
+                    token_match[token_name] = match
                 temp_pattern = replace_variables(
-                    tknmatch, replace_variables(tknmatch, temp_pattern)
+                    token_match, replace_variables(token_match, temp_pattern)
                 )
-                # Token values added from other tokens
-                if next_optns:  # Next Part option
-                    temp_pattern = re_convert(content=temp_pattern, donly=next_optns)
+                if next_options:  # Next Part option
+                    temp_pattern = re_convert(
+                        original_content=temp_pattern, conversion_parts=next_options
+                    )
                 try:
-                    content = content.replace(partmatch, temp_pattern)
-                except Exception:
+                    original_content = original_content.replace(
+                        part_match, temp_pattern
+                    )
+                except ValueError:
                     print(temp_pattern)
-    return content
+    return original_content
 
 
 def find_substring_lines(
@@ -781,7 +811,8 @@ def load_compiled_yaml_details(
 def print_yaml_documentation(source_file: str) -> None:
     """
     Prints documentation of the part in yaml file.
-    CommandLine: python langtrans.py -d source.
+
+    :example: python langtrans.py -d source.
 
     :param file: Path of the file.
     :type file: str
@@ -873,8 +904,10 @@ if __name__ == "__main__":
         after, yaml_details = yaml_details
         with open(argv[1]) as InputFile:
             content = InputFile.read()
-        re_convert = partial(convert, yaml_details=yaml_details, isrecursion=True)
-        targetcode = convert(yaml_details, content)
+        re_convert = partial(
+            convert_syntax, extracted_yaml_details=yaml_details, is_recursive=True
+        )
+        targetcode = convert_syntax(yaml_details, content)
         with open(argv[2], "w") as OutputFile:
             OutputFile.write(targetcode)
         print(Fore.GREEN, "Saved as", argv[2])
@@ -910,4 +943,5 @@ if __name__ == "__main__":
             if inp.lower() != "n":
                 system(after)
     except Exception as err:
-        print(Fore.RED + "Program Error:", err)
+        # print(Fore.RED + "Program Error:", err)
+        raise err
