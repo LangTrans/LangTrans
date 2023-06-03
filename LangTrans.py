@@ -52,6 +52,7 @@ _Collections = Optional[Dict[str, Optional[List[str]]]]
 _AfterProcessing = Optional[Union[List[str], str, Dict[str, str]]]
 _ArbitraryDict = Dict[str, Dict[str, Any]]
 _VariablesDict = Dict[str, str]
+_ErrorTokensDict = Dict[str, Union[str, int, float, bool]]
 _TargetStringLines = Optional[Tuple[int, int, List[str]]]
 _CompileErrorTuple = Tuple[Dict[str, _ErrorDictionary], _OutsideOptions]
 
@@ -204,8 +205,8 @@ def tknoptions(
 
 
 def replace_variables(
-    source_string: str,
     global_variables: _VariablesDict,
+    source_string: str,
 ) -> str:
     """
     Replaces variable_name with its variable_value.
@@ -236,7 +237,7 @@ def compile_error_regexes(
     Compiles regex patterns for each error in the errors dictionary.
 
     :param error_definitions: A dictionary of errors and their properties.
-    :type errerror_definitionsors: _ArbitraryDict
+    :type error_definitions: _ArbitraryDict
 
     :param global_variables: A dictionary of global variables.
     :type global_variables: _VariablesDict
@@ -375,31 +376,82 @@ def extract(
     return after, (match_options, trans_options, (outside if errfile else None))
 
 
-def err_report(
-    part: str,
-    msg: str,
-    name: str,
+def report_syntax_error(
+    error_part: str,
+    error_message: str,
+    error_name: str,
     match: _StringMatch,
-    tkns: Dict,
-    content: str,
-    matchstr: str,
-):
-    """Shows error messages for syntax errors."""
-    pos, l, indexed = find_substring_lines(content.splitlines(), matchstr)
-    err_part = match.group()
-    if part:  # Part Name
-        print(f"[{Fore.MAGENTA + part + Fore.RESET}]")
-    line = indexed[0].lstrip()
-    lineno = str(pos + 1) + " |"
-    # error Line
-    print(Fore.CYAN + lineno, line.replace(err_part, Fore.RED + err_part + Fore.RESET))
-    total_msg = replace_variables(  # Replacing variables in main and err match
-        {"$" + str(l): tkn for l, tkn in enumerate(match.groups(), start=1)},  # Err
-        replace_variables(tkns, msg),  # Main
+    tokens: dict,
+    source_content: str,
+    matched_string: str,
+) -> None:
+    """
+    Reports syntax error messages in a colored format.
+
+    This function takes in error details and source content, finds the line of error
+    in the source content, and prints out an error report in a colored format. It
+    terminates the program after printing the error.
+
+    :param error_part: Name of the part where error occurred.
+    :type error_part: str
+
+    :param error_message: The error message.
+    :type error_message: str
+
+    :param error_name: The name of the error.
+    :type error_name: str
+
+    :param match: The string match object of the error.
+    :type match: _StringMatch
+
+    :param tokens: Dictionary of variables for replacement in the error message.
+    :type tokens: _VariablesDict
+
+    :param source_content: The source code content.
+    :type source_content: str
+
+    :param matched_string: The string in the source content that matched the error pattern.
+    :type matched_string: str
+
+    :return: None
+    """
+    result = find_substring_lines(source_content.splitlines(), matched_string)
+
+    if result is None:
+        print("Error: Cannot find the error in the source content.")
+        exit()
+
+    start_line, line_count, matched_lines = result
+    highlighted_part = match.group()
+
+    if error_part:  # Print part name
+        print(f"[{Fore.MAGENTA + error_part + Fore.RESET}]")
+
+    first_line = matched_lines[0].lstrip()
+    line_number = str(start_line + 1) + " |"
+
+    # Print error line with error part highlighted
+    print(
+        Fore.CYAN + line_number,
+        first_line.replace(highlighted_part, Fore.RED + highlighted_part + Fore.RESET),
     )
-    # Error Name
-    print(" " * (line.index(err_part) + len(lineno)), Fore.RED + name.replace("_", " "))
-    print(Fore.YELLOW + total_msg)  # Error Info
+
+    replaced_message = replace_variables(
+        {
+            "$" + str(idx): token for idx, token in enumerate(match.groups(), start=1)
+        },  # Error variables
+        replace_variables(tokens, error_message),  # Main variables
+    )
+
+    # Print error name
+    print(
+        " " * (first_line.index(highlighted_part) + len(line_number)),
+        Fore.RED + error_name.replace("_", " "),
+    )
+
+    # Print error message
+    print(Fore.YELLOW + replaced_message)
+
     exit()
 
 
@@ -446,7 +498,7 @@ def matching(
                 for name, error in err.items():  # Static Code Analysis
                     err_match = error["regex"].search(matchstr)
                     if err_match:
-                        err_report(
+                        report_syntax_error(
                             part,
                             error["msg"],
                             name,
@@ -473,13 +525,18 @@ def matching(
 matching.oncedone = []  # List of "once: True" parts that are already matched
 
 
-def outside_err(outside: _OutsideOptions, content: str):
-    """Finds syntax errors in the source code and shows error messages."""
-    for part, errors in outside.items():
+def find_outside_errors(outside_options: _OutsideOptions, content: str) -> None:
+    """
+    Finds syntax errors in the source code and shows error messages.
+
+
+
+    """
+    for part, errors in outside_options.items():
         for name, error in errors.items():
             err_match = error["regex"].search(content)
             if err_match:
-                err_report(
+                report_syntax_error(
                     part,
                     error.get("msg", ""),
                     name,
@@ -510,7 +567,7 @@ def convert(
     if isrecursion:
         match_options = {part: match_options[part] for part in donly}
     elif outside:  # Outside error checks
-        outside_err(outside, content)
+        find_outside_errors(outside, content)
     while 1:
         partsmatches = matching(content, match_options, isrecursion)
         if not partsmatches:  # Break when no match found
