@@ -50,7 +50,7 @@ _ParseYAMLDetails = tuple[
 ]
 _Collections = Optional[dict[str, Optional[list[str]]]]
 _AfterProcessing = Optional[Union[list[str], str, dict[str, str]]]
-_ArbitraryDict = dict[str, dict[str, Any]]
+_ArbitraryDict = dict[str, dict[str, Any], ...]
 _VariablesDict = dict[str, str]
 _TargetStringLines = Optional[Tuple[int, int, List[str]]]
 
@@ -82,7 +82,8 @@ def sanitize_regex(regex: str) -> _RegexPattern:
         print(error_msg, "Invalid regex")
         print(error.msg)
         print("Regex:", regex.replace("\n", r"\n").replace("\t", r"\t"))
-        print(" " * (error.pos + 7) + "^")
+        if error.pos is not None:
+            print(" " * (error.pos + 7) + "^")
         raise error
 
 
@@ -222,30 +223,33 @@ def replace_variable(global_vars: _VariablesDict, source_string: str) -> str:
     return source_string
 
 
-def compile_rgx(errors: _ArbitraryDict, var: _VariablesDict):
+def compile_error_regexes(
+    error_definitions: _ArbitraryDict, global_variables: _VariablesDict
+) -> _ArbitraryDict:
     """
-    Compiles regex patterns for each error in the `errors` dictionary.
+    Compiles regex patterns for each error in the errors dictionary.
 
-    This function replaces all occurrences of <variable_name> in the `regex` field of each error in the `errors`
-    dictionary with their corresponding values in the `variables` dictionary. The replacement is done in reverse order
-    of the items in the `variables` dictionary to ensure that longer variable names are replaced before shorter ones.
-    The resulting regex pattern is then compiled and stored in the `regex` field of the error.
+    :param error_definitions: A dictionary of errors and their properties.
+    :type errerror_definitionsors: _ArbitraryDict
 
-    :param errors: A dictionary of errors and their properties.
-    :type errors: _ArbitraryDict
-
-    :param variables: A dictionary of global variables.
-    :type variables: _VariablesDict
+    :param global_variables: A dictionary of global variables.
+    :type global_variables: _VariablesDict
 
     :return: The `errors` dictionary with compiled regex patterns.
     :rtype: _ArbitraryDict
     """
-    for name, error in errors.items():
-        if name == "outside":
-            errors = compile_rgx(error, var)
-            continue
-        error["regex"] = sanitize_regex(replace_variable(var, error["regex"]))
-    return errors
+    result = {}
+
+    for error_name, error in error_definitions.items():
+        if error_name == "outside":
+            result[error_name] = compile_error_regexes(error, global_variables)
+        else:
+            result[error_name] = error.copy()
+            result[error_name]["regex"] = sanitize_regex(
+                replace_variable(global_variables, error["regex"])
+            )
+
+    return result
 
 
 def comp_err(
@@ -261,7 +265,7 @@ def comp_err(
     errors_def = load_yaml_file(name)
     outside = {}
     for part, errors in errors_def.items():
-        errors = compile_rgx(errors, variables)
+        errors = compile_error_regexes(errors, variables)
         if "outside" in errors:
             outside[part] = errors.pop("outside")
     if "outside" in errors_def:  # Outside not related to part
