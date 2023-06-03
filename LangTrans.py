@@ -388,10 +388,6 @@ def report_syntax_error(
     """
     Reports syntax error messages in a colored format.
 
-    This function takes in error details and source content, finds the line of error
-    in the source content, and prints out an error report in a colored format. It
-    terminates the program after printing the error.
-
     :param error_part: Name of the part where error occurred.
     :type error_part: str
 
@@ -414,6 +410,10 @@ def report_syntax_error(
     :type matched_string: str
 
     :return: None
+
+    This function takes in error details and source content, finds the line of error
+    in the source content, and prints out an error report in a colored format. It
+    terminates the program after printing the error.
     """
     result = find_substring_lines(source_content.splitlines(), matched_string)
 
@@ -525,26 +525,43 @@ def matching(
 matching.oncedone = []  # List of "once: True" parts that are already matched
 
 
-def find_outside_errors(outside_options: _OutsideOptions, content: str) -> None:
+def find_outside_errors(outside_options: _OutsideOptions, source_code: str) -> None:
     """
     Finds syntax errors in the source code and shows error messages.
 
+    :param outside_options: A dictionary mapping parts of the outside options
+    :type outside_options: _OutsideOptions
 
+    :param source_code: The source code content to check for errors.
+    :type source_code: str
 
+    :return: None
+
+    This function checks for matches of the regular expression patterns associated
+    with each error in the outside options, in the provided source_code. If a match
+    is found, an error report is generated.
     """
+
+    if not outside_options:
+        return
+
     for part, errors in outside_options.items():
-        for name, error in errors.items():
-            err_match = error["regex"].search(content)
-            if err_match:
-                report_syntax_error(
-                    part,
-                    error.get("msg", ""),
-                    name,
-                    err_match,
-                    {},
-                    content,
-                    err_match.group(),
-                )
+        for error_name, error_details in errors.items():
+            regex_pattern = error_details.get("regex")
+            if isinstance(regex_pattern, Pattern):
+                error_match = regex_pattern.search(source_code)
+                if error_match:
+                    error_message = error_details.get("msg", "")
+                    matched_text = error_match.group()
+                    report_syntax_error(
+                        part,
+                        error_message,
+                        error_name,
+                        error_match,
+                        {},
+                        source_code,
+                        matched_text,
+                    )
 
 
 def convert(
