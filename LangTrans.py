@@ -52,6 +52,7 @@ _Collections = Optional[dict[str, Optional[list[str]]]]
 _AfterProcessing = Optional[Union[list[str], str, dict[str, str]]]
 _ArbitraryDict = dict[str, dict[str, Any]]
 _VariablesDict = dict[str, str]
+
 # -----------------------------------
 #  For colored error - Intialiazing colorama
 init(autoreset=True)
@@ -86,9 +87,7 @@ def sanitize_regex(regex: str) -> _RegexPattern:
 
 def check_collections(calls: list[str], collections: _Collections) -> tuple[str, ...]:
     """
-    Adds collections to the call list. If a collection name starts with '$', the function
-    looks up the collection in the `collections` dictionary and replaces the collection
-    name with the collection values.
+    Adds collections to the call list.
 
     :param calls: A list of collection names and part names.
     :type calls: list[str]
@@ -100,6 +99,9 @@ def check_collections(calls: list[str], collections: _Collections) -> tuple[str,
     :rtype: tuple[str, ...]
 
     :raises KeyError: If a collection is not found.
+
+    If a collection name starts with '$', the function looks up the collection in the
+    collections dictionary and replaces the collection name with the collection values.
     """
 
     if not collections:
@@ -196,7 +198,7 @@ def tknoptions(
     )
 
 
-def replace_variable(global_vars: _VariablesDict, source_string: str):
+def replace_variable(global_vars: _VariablesDict, source_string: str) -> str:
     """
     Replaces <var_name> with its var_value.
 
@@ -220,6 +222,23 @@ def replace_variable(global_vars: _VariablesDict, source_string: str):
 
 
 def compile_rgx(errors: _ArbitraryDict, var: _VariablesDict):
+    """
+    Compiles regex patterns for each error in the `errors` dictionary.
+
+    This function replaces all occurrences of <variable_name> in the `regex` field of each error in the `errors`
+    dictionary with their corresponding values in the `variables` dictionary. The replacement is done in reverse order
+    of the items in the `variables` dictionary to ensure that longer variable names are replaced before shorter ones.
+    The resulting regex pattern is then compiled and stored in the `regex` field of the error.
+
+    :param errors: A dictionary of errors and their properties.
+    :type errors: _ArbitraryDict
+
+    :param variables: A dictionary of global variables.
+    :type variables: _VariablesDict
+
+    :return: The `errors` dictionary with compiled regex patterns.
+    :rtype: _ArbitraryDict
+    """
     for name, error in errors.items():
         if name == "outside":
             errors = compile_rgx(error, var)
@@ -238,7 +257,7 @@ def comp_err(
     :param variables: Global variables.
     :return: compiled error inside and outside part.
     """
-    errors_def = load_yaml(name)
+    errors_def = load_yaml_file(name)
     outside = {}
     for part, errors in errors_def.items():
         errors = compile_rgx(errors, variables)
@@ -545,12 +564,15 @@ def getotalines(lines: list[str], substring: str):
     return pos, sublen, indexed  # dict(zip(sublines,indexed))
 
 
-def load_yaml(file: str) -> dict[str, Any]:
+def load_yaml_file(file: str) -> dict[str, Any]:
     """
-    Loads yaml files.
+    Adds .yaml file extension and extracts dictionary of YAML data in file.
 
-    :param file: The base filename.
-    :return: Yaml Details.
+    :param file_path: The path to the YAML file.
+    :type file_path: str
+
+    :return: A dictionary containing the YAML data.
+    :rtype: dict[str, Any]
     """
     from yaml import load, SafeLoader
     from yaml.scanner import ScannerError
@@ -558,12 +580,16 @@ def load_yaml(file: str) -> dict[str, Any]:
 
     file += ".yaml"
     try:
-        with open(file) as yamlFile:
-            return load(yamlFile.read(), Loader=SafeLoader)
-    except (ScannerError, ParserError) as err:  # Error message for Invalid Yaml File
+        with open(file, encoding="utf-8") as yaml_file:
+            return load(yaml_file.read(), Loader=SafeLoader)
+    except (
+        ScannerError,
+        ParserError,
+    ) as invalid_file:  # Error message for Invalid Yaml File
         print(error_msg, file, "is invalid")
-        print(err.problem, err.context)
-        print(err.problem_mark.get_snippet())
+        print(invalid_file.problem, invalid_file.context)
+        if invalid_file.problem_mark is not None:
+            print(invalid_file.problem_mark.get_snippet())
         exit()
     except FileNotFoundError:
         exit(f"{error_msg} {file} not found")
@@ -577,8 +603,8 @@ def grab(source: str, target: str) -> tuple[_AfterProcessing, _ParseYAMLDetails]
     :param l: Location of the argument needed.
     :return: The after command and yaml details.
     """
-    spattern = load_yaml(source)
-    tpattern = load_yaml(target)
+    spattern = load_yaml_file(source)
+    tpattern = load_yaml_file(target)
     for part in spattern:  # Template checking
         if not (part in tpattern or part == "settings"):
             if part.startswith("_"):  # For parts with same pattern
@@ -608,7 +634,7 @@ def grab_var(file: str) -> _VariablesDict:
     """
     variables = {}
     try:
-        v = load_yaml(file)
+        v = load_yaml_file(file)
         if v is not None:
             variables.update(v)
     except ValueError:
@@ -639,7 +665,7 @@ def doc(file: str):
 
     :param file: Address of the file.
     """
-    yaml = load_yaml(file)
+    yaml = load_yaml_file(file)
     if "settings" in yaml:
         settings = yaml["settings"]
         if "lang" in settings:
