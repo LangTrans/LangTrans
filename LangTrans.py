@@ -53,6 +53,7 @@ _AfterProcessing = Optional[Union[List[str], str, Dict[str, str]]]
 _ArbitraryDict = Dict[str, Dict[str, Any], ...]
 _VariablesDict = Dict[str, str]
 _TargetStringLines = Optional[Tuple[int, int, List[str]]]
+_CompileErrorTuple = Tuple[Dict[str, _ErrorDictionary], _OutsideOptions]
 
 # -----------------------------------
 #  For colored error - Intialiazing colorama
@@ -252,25 +253,36 @@ def compile_error_regexes(
     return result
 
 
-def comp_err(
-    name: str, variables: _VariablesDict
-) -> Tuple[Dict[str, _ErrorDictionary], _OutsideOptions]:
+def compile_error_regex_in_file(
+    file_name: str, global_variables: _VariablesDict
+) -> _CompileErrorTuple:
     """
     Compiles regexes in an error file.
 
-    :param name: Name of errfile.
-    :param variables: Global variables.
-    :return: compiled error inside and outside part.
+    :param file_name: Name of errfile.
+    :type file_name: str
+
+    :param global_variables: Global variables.
+    :type global_variables: _VariablesDict
+
+    :return: Tuple of dictionaries, one compiled error inside and one for outside part.
+    :rtype: _CompileErrorTuple
+
+    Loads an error definitions file, compiles the regular expressions in the error
+    definitions, and separates 'outside' errors.
     """
-    errors_def = load_yaml_file(name)
-    outside = {}
-    for part, errors in errors_def.items():
-        errors = compile_error_regexes(errors, variables)
-        if "outside" in errors:
-            outside[part] = errors.pop("outside")
-    if "outside" in errors_def:  # Outside not related to part
-        outside[""] = errors_def.pop("outside")
-    return errors_def, outside
+    error_definitions = load_yaml_file(file_name)
+    outside_errors = {}
+
+    for error_part, errors in error_definitions.items():
+        compiled_errors = compile_error_regexes(errors, global_variables)
+        if "outside" in compiled_errors:
+            outside_errors[error_part] = compiled_errors.pop("outside")
+
+    if "outside" in error_definitions:  # Outside errors not related to any part
+        outside_errors[""] = error_definitions.pop("outside")
+
+    return error_definitions, outside_errors
 
 
 def extract(
@@ -296,7 +308,7 @@ def extract(
         if "variables" in setting:  # Adding variables in settings
             variables.update(setting["variables"])
         if "errfile" in setting:
-            errfile, outside = comp_err(
+            errfile, outside = compile_error_regex_in_file(
                 os.path.join(dirname(__file__), setting["errfile"]), variables
             )
         collections = setting.get("collections")
