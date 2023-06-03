@@ -22,36 +22,36 @@ from colorama import init, Fore
 _RegexPattern = Pattern[str]  # Compiled Regex
 _StringMatch = Match[str]  # Matched String
 _ErrorDetails = Dict[str, Union[_RegexPattern, str]]
-_ErrorDictionary = dict[str, _ErrorDetails]
-_UnmatchedPatterns = dict[str, tuple[_RegexPattern, ...]]
-_MatchOptions = dict[
+_ErrorDictionary = Dict[str, _ErrorDetails]
+_UnmatchedPatterns = Dict[str, Tuple[_RegexPattern, ...]]
+_MatchOptions = Dict[
     str,
-    tuple[
+    Tuple[
         _RegexPattern,  # regex
-        tuple[str, ...],  # tokens
+        Tuple[str, ...],  # tokens
         bool,  # Global
-        tuple[_UnmatchedPatterns, tuple[_RegexPattern, ...]],  # untkn  # unpart
-        dict[str, str],  # defaults
+        Tuple[_UnmatchedPatterns, Tuple[_RegexPattern, ...]],  # untkn  # unpart
+        Dict[str, str],  # defaults
         bool,  # once
         Optional[_ErrorDictionary],  # err
     ],
 ]
-_OutsideOptions = Optional[dict[str, _ErrorDictionary]]
-_TokenPattern = Optional[dict[str, str]]
-_NextOptions = Optional[Union[tuple[str, ...]]]
+_OutsideOptions = Optional[Dict[str, _ErrorDictionary]]
+_TokenPattern = Optional[Dict[str, str]]
+_NextOptions = Optional[Union[Tuple[str, ...]]]
 _TokenProcessingOptions = Dict[
-    str, Union[tuple[tuple[Union[_RegexPattern, str], str], ...], tuple[str, ...], str]
+    str, Union[Tuple[Tuple[Union[_RegexPattern, str], str], ...], Tuple[str, ...], str]
 ]
-_TokenOptions = dict[str, _TokenProcessingOptions]
-_OperationTuples = tuple[_TokenOptions, _NextOptions]
-_TranslationOptions = dict[str, _OperationTuples]
-_ParseYAMLDetails = tuple[
-    tuple[_MatchOptions, _TranslationOptions, _OutsideOptions], _TokenPattern
+_TokenOptions = Dict[str, _TokenProcessingOptions]
+_OperationTuples = Tuple[_TokenOptions, _NextOptions]
+_TranslationOptions = Dict[str, _OperationTuples]
+_ParseYAMLDetails = Tuple[
+    Tuple[_MatchOptions, _TranslationOptions, _OutsideOptions], _TokenPattern
 ]
-_Collections = Optional[dict[str, Optional[list[str]]]]
-_AfterProcessing = Optional[Union[list[str], str, dict[str, str]]]
-_ArbitraryDict = dict[str, dict[str, Any], ...]
-_VariablesDict = dict[str, str]
+_Collections = Optional[Dict[str, Optional[List[str]]]]
+_AfterProcessing = Optional[Union[List[str], str, Dict[str, str]]]
+_ArbitraryDict = Dict[str, Dict[str, Any], ...]
+_VariablesDict = Dict[str, str]
 _TargetStringLines = Optional[Tuple[int, int, List[str]]]
 
 # -----------------------------------
@@ -87,18 +87,18 @@ def sanitize_regex(regex: str) -> _RegexPattern:
         raise error
 
 
-def check_collections(calls: list[str], collections: _Collections) -> tuple[str, ...]:
+def check_collections(calls: List[str], collections: _Collections) -> Tuple[str, ...]:
     """
     Adds collections to the call list.
 
     :param calls: A list of collection names and part names.
-    :type calls: list[str]
+    :type calls: List[str]
 
     :param collections: A dictionary of collections and their names.
     :type collections: _Collections
 
     :return: A tuple of the collection-replaced call list.
-    :rtype: tuple[str, ...]
+    :rtype: Tuple[str, ...]
 
     :raises KeyError: If a collection is not found.
 
@@ -128,9 +128,9 @@ def check_collections(calls: list[str], collections: _Collections) -> tuple[str,
 
 
 def tknoptions(
-    sdef: dict[str, Any], collections: _Collections, variables: _VariablesDict
-) -> tuple[
-    _UnmatchedPatterns, dict[str, str], tuple[_TokenOptions, Optional[tuple[str, ...]]]
+    sdef: Dict[str, Any], collections: _Collections, variables: _VariablesDict
+) -> Tuple[
+    _UnmatchedPatterns, Dict[str, str], Tuple[_TokenOptions, Optional[Tuple[str, ...]]]
 ]:
     """
     This function extracts token options from a yaml file.
@@ -141,10 +141,10 @@ def tknoptions(
     """
     trans_option: _TokenOptions = {}
     unmatches: _UnmatchedPatterns = {}
-    defaults: dict[str, str] = {}
+    defaults: Dict[str, str] = {}
     tkns: list = sdef["tokens"]
     for tkname, opts in sdef.items():
-        if isinstance(opts, dict):
+        if isinstance(opts, Dict):
             opns: _TokenProcessingOptions = {}
             # Token options
             for opn, data in opts.items():
@@ -254,7 +254,7 @@ def compile_error_regexes(
 
 def comp_err(
     name: str, variables: _VariablesDict
-) -> tuple[dict[str, _ErrorDictionary], _OutsideOptions]:
+) -> Tuple[Dict[str, _ErrorDictionary], _OutsideOptions]:
     """
     Compiles regexes in an error file.
 
@@ -275,8 +275,8 @@ def comp_err(
 
 def extract(
     spattern: _ArbitraryDict,
-) -> tuple[
-    _AfterProcessing, tuple[_MatchOptions, _TranslationOptions, _OutsideOptions]
+) -> Tuple[
+    _AfterProcessing, Tuple[_MatchOptions, _TranslationOptions, _OutsideOptions]
 ]:
     """
     This function extracts contents needed from yaml file with regex.
@@ -285,14 +285,14 @@ def extract(
     :return: after command and (match options, token options).
     """
     # Importing builtin variables
-    variables = grab_var(os.path.join(dirname(__file__), "builtin"))
+    variables = load_variables(os.path.join(dirname(__file__), "builtin"))
     # Settings-------------------------------------------------------
     after = errfile = outside = collections = None
     if "settings" in spattern:
         setting = spattern.pop("settings")
         after = setting.get("after")
         if "varfile" in setting:  # Importing variables from varfile
-            variables.update(grab_var(setting["varfile"]))
+            variables.update(load_variables(setting["varfile"]))
         if "variables" in setting:  # Adding variables in settings
             variables.update(setting["variables"])
         if "errfile" in setting:
@@ -306,7 +306,7 @@ def extract(
     try:
         for part, sdef in spattern.items():
             for opt in sdef.values():
-                if isinstance(opt, dict) and "replace" in opt:
+                if isinstance(opt, Dict) and "replace" in opt:
                     for replace in opt[
                         "replace"
                     ]:  # Replacing variables in replace option
@@ -363,7 +363,7 @@ def err_report(
     msg: str,
     name: str,
     match: _StringMatch,
-    tkns: dict,
+    tkns: Dict,
     content: str,
     matchstr: str,
 ):
@@ -388,7 +388,7 @@ def err_report(
 
 def matching(
     content: str, match_options: _MatchOptions, isrecursion: bool
-) -> dict[str, list[tuple[str, dict[str, str]]]]:
+) -> Dict[str, List[Tuple[str, Dict[str, str]]]]:
     """
     Matches parts of source code.
 
@@ -402,7 +402,7 @@ def matching(
     :type isrecursion: bool
 
     :return: Return matched parts and tokens.
-    :rtype: dict[str, list[tuple[str, dict[str, str]]]]
+    :rtype: Dict[str, List[Tuple[str, Dict[str, str]]]]
     """
     partmatches = {}
     oncedone = matching.oncedone
@@ -477,7 +477,7 @@ def convert(
     yaml_details: _ParseYAMLDetails,
     content: str,
     isrecursion: bool = False,
-    donly: Union[tuple[str, ...]] = (),
+    donly: Union[Tuple[str, ...]] = (),
 ):
     """
     This is the main function that converts new syntax to original syntax.
@@ -584,7 +584,7 @@ def find_substring_lines(
     return None
 
 
-def load_yaml_file(file: str) -> dict[str, Any]:
+def load_yaml_file(file: str) -> Dict[str, Any]:
     """
     Adds .yaml file extension and extracts dictionary of YAML data in file.
 
@@ -592,7 +592,7 @@ def load_yaml_file(file: str) -> dict[str, Any]:
     :type file_path: str
 
     :return: A dictionary containing the YAML data.
-    :rtype: dict[str, Any]
+    :rtype: Dict[str, Any]
     """
     from yaml import load, SafeLoader
     from yaml.scanner import ScannerError
@@ -615,7 +615,7 @@ def load_yaml_file(file: str) -> dict[str, Any]:
         exit(f"{error_msg} {file} not found")
 
 
-def grab(source: str, target: str) -> tuple[_AfterProcessing, _ParseYAMLDetails]:
+def grab(source: str, target: str) -> Tuple[_AfterProcessing, _ParseYAMLDetails]:
     """
     Gets details from source and target yaml files.
 
@@ -645,24 +645,27 @@ def grab(source: str, target: str) -> tuple[_AfterProcessing, _ParseYAMLDetails]
     return after, (rest, tpattern)
 
 
-def grab_var(file: str) -> _VariablesDict:
+def load_variables(file_path: str) -> _VariablesDict:
     """
-    Loads variables from an external file.
+    Loads variables from a YAMP file.
 
-    :param file: Address of the external file.
+    :param file: Path of the YAML file.
+    :type file: str
+
     :return: Dictionary of variables.
+    :rtype: Dict[str, Any]
     """
     variables = {}
     try:
-        v = load_yaml_file(file)
-        if v is not None:
-            variables.update(v)
+        loaded_variables = load_yaml_file(file_path)
+        if loaded_variables is not None:
+            variables.update(loaded_variables)
     except ValueError:
-        exit(f"{error_msg} Invalid varfile({file}.yaml)\n")
+        exit(f"Error: Invalid YAML file: {file_path}\n")
     return variables
 
 
-def get_ltz(filename: str) -> tuple[_AfterProcessing, _ParseYAMLDetails]:
+def get_ltz(filename: str) -> Tuple[_AfterProcessing, _ParseYAMLDetails]:
     """
     Loads compiled yaml_details from .ltz file.
 
@@ -769,7 +772,7 @@ if __name__ == "__main__":
             print(targetcode)
         # For after command in settings
         if not no and after:  # Not None
-            if isinstance(after, dict):  # After command for different OS
+            if isinstance(after, Dict):  # After command for different OS
                 from platform import system as systm
 
                 osname = systm().lower()  # Current os name
