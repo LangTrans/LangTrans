@@ -13,7 +13,7 @@ See LICENSE file for orginal text.
 from os import system
 from os.path import dirname
 import os
-from sys import argv, exit
+from sys import argv, exit as sys_exit
 from functools import partial
 from typing import Any, Match, Pattern, Dict, Union, Optional, List, Tuple
 from colorama import init, Fore
@@ -85,7 +85,7 @@ def sanitize_regex(regex: str) -> _RegexPattern:
     regex = regex.replace(" ", r"\s+").replace("~", r"\s*")
 
     try:
-        return compile(regex, 8)  # re.MULTILINE=8
+        return re_compile(regex, 8)  # re.MULTILINE=8
     except re_error as error:
         print(error_msg, "Invalid regex")
         print(error.msg)
@@ -281,7 +281,7 @@ def compile_error_regexes(
             result[error_name] = compile_error_regexes(error, global_variables)
         else:
             result[error_name] = error.copy()
-            result[error_name]["regex"] = sanitize_regex(
+            result[error_name]["regex"]["pattern"] = sanitize_regex(
                 replace_variables(global_variables, error["regex"])
             )
 
@@ -368,7 +368,7 @@ def extract(
                 else:
                     print("Part:", part)
                     print("Token Names:", len(tokens), "Capture Groups:", regex.groups)
-                    exit(
+                    sys_exit(
                         error_msg
                         + " Number of token names is not equal to number of capture groups"
                     )
@@ -379,8 +379,8 @@ def extract(
 
             unmatches, defaults, tknopns = result
 
-            if m := var_rgx.search(regex.pattern):
-                print(Fore.YELLOW + "Warning:", m.group(), "not found")
+            if match_var := var_rgx.search(regex.pattern):
+                print(Fore.YELLOW + "Warning:", match_var.group(), "not found")
             match_options[part] = (
                 regex,
                 tokens,
@@ -405,9 +405,9 @@ def extract(
             trans_options[part] = tknopns
 
     except (re_error, TypeError):  # Regex and unknown token option error
-        exit(f"Part:{part}")
+        sys_exit(f"Part:{part}")
     except KeyError as key_error:  # For part without regex or tokens
-        exit(f"{error_msg} {key_error} not found in {part}")
+        sys_exit(f"{error_msg} {key_error} not found in {part}")
     return after, (match_options, trans_options, (outside if errfile else None))
 
 
@@ -454,9 +454,9 @@ def report_syntax_error(
 
     if result is None:
         print("Error: Cannot find the error in the source content.")
-        exit()
+        sys_exit()
 
-    start_line, line_count, matched_lines = result
+    start_line, _, matched_lines = result
     highlighted_part = match.group()
 
     if error_part:  # Print part name
@@ -487,7 +487,7 @@ def report_syntax_error(
     # Print error message
     print(Fore.YELLOW + replaced_message)
 
-    exit()
+    sys_exit()
 
 
 # List of "once: True" parts that are already matched
@@ -544,24 +544,32 @@ def match_parts(
                 continue
             token_match = {
                 token_match_name: (
-                    m if m is not None else defaults.get(token_match_name, "")
+                    match_variable
+                    if match_variable is not None
+                    else defaults.get(token_match_name, "")
                 )
-                for token_match_name, m in zip(token_names, match.groups())
+                for token_match_name, match_variable in zip(token_names, match.groups())
             }
             if err:  # If error definition exists
+                from re import search as re_search
+
                 for name, error in err.items():  # Static Code Analysis
                     regex = (
                         error["regex"]
                         if isinstance(error["regex"], Pattern)
                         else re_error(error["regex"])
                     )
-                    err_match = regex.search(match_string)
+                    if isinstance(regex, (str, Pattern)):
+                        err_match = re_search(regex, match_string)
 
-                    # err_match = error["regex"].search(match_string)
+                    error_message = error["msg"]
+                    if error_message is None or not isinstance(error_message, str):
+                        error_message = ""
+
                     if err_match:
                         report_syntax_error(
                             part,
-                            error["msg"],
+                            error_message,
                             name,
                             err_match,
                             token_match,
@@ -608,8 +616,11 @@ def find_outside_errors(outside_options: _OutsideOptions, source_code: str) -> N
             if isinstance(regex_pattern, Pattern):
                 error_match = regex_pattern.search(source_code)
                 if error_match:
-                    error_message = error_details.get("msg", "")
+                    error_message = error_details.get("msg")
+                    if error_message is None or not isinstance(error_message, str):
+                        error_message = ""
                     matched_text = error_match.group()
+
                     report_syntax_error(
                         part,
                         error_message,
@@ -673,7 +684,7 @@ def convert_syntax(
                     (f"{part}:{matches}" for part, matches in matched_parts.items())
                 ),
             )
-            exit()
+            sys_exit()
         iteration_count += 1
 
         for part, matches in matched_parts.items():
@@ -788,9 +799,9 @@ def load_yaml_file(file: str) -> Dict[str, Any]:
         print(invalid_file.problem, invalid_file.context)
         if invalid_file.problem_mark is not None:
             print(invalid_file.problem_mark.get_snippet())
-        exit()
+        sys_exit()
     except FileNotFoundError:
-        exit(f"{error_msg} {file} not found")
+        sys_exit(f"{error_msg} {file} not found")
 
 
 def extract_yaml_details(
@@ -851,7 +862,7 @@ def load_variables(file_path: str) -> _VariablesDict:
         if loaded_variables is not None:
             variables.update(loaded_variables)
     except ValueError:
-        exit(f"Error: Invalid YAML file: {file_path}\n")
+        sys_exit(f"Error: Invalid YAML file: {file_path}\n")
     return variables
 
 
@@ -874,7 +885,7 @@ def load_compiled_yaml_details(
             return load(compiled_yaml)
     except FileNotFoundError as fnf_error:
         print(f"File {fnf_error.filename} not found.")
-        exit()
+        sys_exit()
 
 
 def print_yaml_documentation(source_file: str) -> None:
@@ -932,11 +943,13 @@ def print_yaml_documentation(source_file: str) -> None:
 if __name__ == "__main__":
     if len(argv) == 1 or (len(argv) == 2 and argv[1] == "-h"):
         print("Arg usage: <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>")
-        exit("SyntaxRepr,PatternRepr: without extension(.yaml)")
+        sys_exit("SyntaxRepr,PatternRepr: without extension(.yaml)")
     elif len(argv) < 3:
-        exit(error_msg + " Insufficient number of arguments")
+        sys_exit(error_msg + " Insufficient number of arguments")
 
     try:
+        YAML_DETAILS = None
+
         # Terminal Options-------------------------------------------
         YES = "-y" in argv  # To run after command automatically
         VERBOSE = "-v" in argv  # Verbose Mode - print source code
@@ -951,9 +964,10 @@ if __name__ == "__main__":
         # ------------------------------------------------------------
         if "-c" in argv:  # Compile into ltz
             from pickle import dump, HIGHEST_PROTOCOL
-            from re import compile, error as re_error
+            from re import error as re_error
+            from re import compile as re_compile
 
-            var_rgx = compile(r"<\w+>")
+            var_rgx = re_compile(r"<\w+>")
             argv[-1] += ".ltz"
             with open(argv[-1], "wb") as litz_file:
                 dump(
@@ -962,59 +976,60 @@ if __name__ == "__main__":
                     protocol=HIGHEST_PROTOCOL,
                 )
             print(Fore.GREEN + "Compiled successfully")
-            exit("File saved as " + argv[-1])
+            sys_exit("File saved as " + argv[-1])
         elif "-f" in argv:  # Run compiled ltz
             argv.remove("-f")
-            yaml_details = load_compiled_yaml_details(argv[-1])
+            YAML_DETAILS = load_compiled_yaml_details(argv[-1])
         elif "-d" in argv:
             print_yaml_documentation(argv[-1])
-            exit()
+            sys_exit()
         else:
-            from re import compile, error as re_error
+            from re import error as re_error
+            from re import compile as re_compile
 
-            var_rgx = compile(r"<\w+>")
-            yaml_details = extract_yaml_details(argv[3], argv[4])
+            var_rgx = re_compile(r"<\w+>")
+            YAML_DETAILS = extract_yaml_details(argv[3], argv[4])
         # -------------------------------------------------------------------
-        after, yaml_details = yaml_details
+        AFTER_COMMAND, YAML_DETAILS = YAML_DETAILS
         with open(argv[1], encoding="utf-8") as InputFile:
             content = InputFile.read()
         re_convert = partial(
-            convert_syntax, extracted_yaml_details=yaml_details, is_recursive=True
+            convert_syntax, extracted_yaml_details=YAML_DETAILS, is_recursive=True
         )
-        targetcode = convert_syntax(yaml_details, content)
+        targetcode = convert_syntax(YAML_DETAILS, content)
         with open(argv[2], "w", encoding="utf-8") as OutputFile:
             OutputFile.write(targetcode)
         print(Fore.GREEN, "Saved as", argv[2])
         if VERBOSE:
             print(targetcode)
         # For after command in settings
-        if not NO and after:  # Not None
-            if isinstance(after, Dict):  # After command for different OS
+        if not NO and AFTER_COMMAND:  # Not None
+            if isinstance(AFTER_COMMAND, Dict):  # After command for different OS
                 from platform import system as systm
 
                 osname = systm().lower()  # Current os name
-                if osname not in after:
+                if osname not in AFTER_COMMAND:
                     print(
                         f"{error_msg} No after command for {osname}. OS name eg. linux, windows"
                     )
-                    exit()
-                after = after[osname]
-            if isinstance(after, list):  # For multiple commands
-                after = " && ".join(after)
-            # To use address of source and target file in 'after' command
+                    sys_exit()
+                AFTER_COMMAND = AFTER_COMMAND[osname]
+            if isinstance(AFTER_COMMAND, list):  # For multiple commands
+                AFTER_COMMAND = " && ".join(AFTER_COMMAND)
+            # To use address of source and target file in 'AFTER_COMMAND' command
             after_var = (
                 ("$target", argv[2]),
                 ("$source", argv[1]),
                 ("$current", dirname(__file__)),
             )
             for var, val in after_var:
-                after = after.replace(var, val)
+                AFTER_COMMAND = AFTER_COMMAND.replace(var, val)
             if YES:
-                system(after)
-                exit()
-            print("\nEnter to run and n to exit\nCommand:", after)
+                system(AFTER_COMMAND)
+                sys_exit()
+            print("\nEnter to run and n to exit\nCommand:", AFTER_COMMAND)
             inp = input()
             if inp.lower() != "n":
-                system(after)
-    except Exception as err:
-        print(Fore.RED + "Program Error:", err)
+                system(AFTER_COMMAND)
+    except Exception as exception_error:
+        print(Fore.RED + "Program Error:", exception_error)
