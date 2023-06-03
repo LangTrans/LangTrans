@@ -756,20 +756,26 @@ def load_variables(file_path: str) -> _VariablesDict:
     return variables
 
 
-def get_ltz(filename: str) -> Tuple[_AfterProcessing, _ParseYAMLDetails]:
+def load_compiled_yaml_details(
+    filename: str,
+) -> Tuple[_AfterProcessing, _ParseYAMLDetails]:
     """
     Loads compiled yaml_details from .ltz file.
 
     :param filename: Name of the file.
+    :type filename: str
+
     :return: yaml_details from .ltz file.
+    :rtype: Tuple[_AfterProcessing, _ParseYAMLDetails]
     """
     from pickle import load
 
     try:
-        with open(filename + ".ltz", "rb") as litzFile:
+        with open(f"{filename}.ltz", "rb") as litzFile:
             return load(litzFile)
-    except FileNotFoundError as err:
-        exit(f"{error_msg} {err.filename} not found")
+    except FileNotFoundError as fnf_error:
+        print(f"File {fnf_error.filename} not found.")
+        exit()
 
 
 def doc(file: str):
@@ -841,7 +847,7 @@ if __name__ == "__main__":
             exit("File saved as " + argv[-1])
         elif "-f" in argv:  # Run compiled ltz
             argv.remove("-f")
-            yaml_details = get_ltz(argv[-1])
+            yaml_details = load_compiled_yaml_details(argv[-1])
         elif "-d" in argv:
             doc(argv[-1])
             exit()
