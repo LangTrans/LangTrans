@@ -15,43 +15,42 @@ from os.path import dirname
 import os
 from sys import argv, exit
 from functools import partial
-from typing import Any, Match, Pattern, TypedDict, Union, Optional, List
+from typing import Any, Match, Pattern, Dict, Union, Optional, List
 from colorama import init, Fore
 
 # Types------------------------------
-Pattern = Pattern[str]  # Compiled Regex
-Match = Match[str]  # Matched String
-err_details = TypedDict("err_details", regex=Pattern, msg=str)
-err_dict = dict[str, err_details]
-_unmatches = dict[str, tuple[Pattern, ...]]
-_match_options = dict[
+_RegexPattern = Pattern[str]  # Compiled Regex
+_StringMatch = Match[str]  # Matched String
+_ErrorDetails = Dict[str, Union[_RegexPattern, str]]
+_ErrorDictionary = dict[str, _ErrorDetails]
+_UnmatchedPatterns = dict[str, tuple[_RegexPattern, ...]]
+_MatchOptions = dict[
     str,
     tuple[
-        Pattern,  # regex
+        _RegexPattern,  # regex
         tuple[str, ...],  # tokens
         bool,  # Global
-        tuple[_unmatches, tuple[Pattern, ...]],  # untkn  # unpart
+        tuple[_UnmatchedPatterns, tuple[_RegexPattern, ...]],  # untkn  # unpart
         dict[str, str],  # defaults
         bool,  # once
-        Optional[err_dict],  # err
+        Optional[_ErrorDictionary],  # err
     ],
 ]
-_outside = Optional[dict[str, err_dict]]
-_tpattern = Optional[dict[str, str]]
-_next_optns = Optional[Union[tuple[str, ...]]]
-_opts = TypedDict(
-    "_opts",
-    replace=tuple[tuple[Union[Pattern, str], str], ...],
-    call=tuple[str, ...],
-    eachline=str,
-)
-_tknopts = dict[str, _opts]
-_opns = tuple[_tknopts, _next_optns]
-_trans_options = dict[str, _opns]
-_yaml_details = tuple[tuple[_match_options, _trans_options, _outside], _tpattern]
+_OutsideOptions = Optional[dict[str, _ErrorDictionary]]
+_TokenPattern = Optional[dict[str, str]]
+_NextOptions = Optional[Union[tuple[str, ...]]]
+_TokenProcessingOptions = Dict[
+    str, Union[tuple[tuple[Union[_RegexPattern, str], str], ...], tuple[str, ...], str]
+]
+_TokenOptions = dict[str, _TokenProcessingOptions]
+_OperationTuples = tuple[_TokenOptions, _NextOptions]
+_TranslationOptions = dict[str, _OperationTuples]
+_ParseYAMLDetails = tuple[
+    tuple[_MatchOptions, _TranslationOptions, _OutsideOptions], _TokenPattern
+]
 _Collections = Optional[dict[str, Optional[list[str]]]]
-_after = Optional[Union[list[str], str, dict[str, str]]]
-_any = dict[str, dict[str, Any]]
+_AfterProcessing = Optional[Union[list[str], str, dict[str, str]]]
+_ArbitraryDict = dict[str, dict[str, Any]]
 _VariablesDict = dict[str, str]
 # -----------------------------------
 #  For colored error - Intialiazing colorama
@@ -59,7 +58,7 @@ init(autoreset=True)
 error_msg = Fore.RED + "Error:"
 
 
-def sanitize_regex(regex: str) -> Pattern:
+def sanitize_regex(regex: str) -> _RegexPattern:
     """
     Sanitizes the regular expression pattern, by replacing spaces with `\s+` and
     `~` with `\s*` to allow for optional whitespace.
@@ -68,7 +67,7 @@ def sanitize_regex(regex: str) -> Pattern:
     :type regex: str
 
     :return: A compiled regular expression pattern object.
-    :rtype: Pattern
+    :rtype: _RegexPattern
 
     :raises re.error: If the regular expression pattern is invalid.
     """
@@ -126,7 +125,9 @@ def check_collections(calls: list[str], collections: _Collections) -> tuple[str,
 
 def tknoptions(
     sdef: dict[str, Any], collections: _Collections, variables: _VariablesDict
-) -> tuple[_unmatches, dict[str, str], tuple[_tknopts, Optional[tuple[str, ...]]]]:
+) -> tuple[
+    _UnmatchedPatterns, dict[str, str], tuple[_TokenOptions, Optional[tuple[str, ...]]]
+]:
     """
     This function extracts token options from a yaml file.
 
@@ -134,13 +135,13 @@ def tknoptions(
     :param collections: Dictionary of collections and their names.
     :return: unmatches, default values, translation options, and next call list.
     """
-    trans_option: _tknopts = {}
-    unmatches: _unmatches = {}
+    trans_option: _TokenOptions = {}
+    unmatches: _UnmatchedPatterns = {}
     defaults: dict[str, str] = {}
     tkns: list = sdef["tokens"]
     for tkname, opts in sdef.items():
         if isinstance(opts, dict):
-            opns: _opts = {}
+            opns: _TokenProcessingOptions = {}
             # Token options
             for opn, data in opts.items():
                 if opn == "eachline":
@@ -218,7 +219,7 @@ def replace_variable(global_vars: _VariablesDict, source_string: str):
     return source_string
 
 
-def compile_rgx(errors: _any, var: _VariablesDict):
+def compile_rgx(errors: _ArbitraryDict, var: _VariablesDict):
     for name, error in errors.items():
         if name == "outside":
             errors = compile_rgx(error, var)
@@ -229,7 +230,7 @@ def compile_rgx(errors: _any, var: _VariablesDict):
 
 def comp_err(
     name: str, variables: _VariablesDict
-) -> tuple[dict[str, err_dict], _outside]:
+) -> tuple[dict[str, _ErrorDictionary], _OutsideOptions]:
     """
     Compiles regexes in an error file.
 
@@ -249,8 +250,10 @@ def comp_err(
 
 
 def extract(
-    spattern: _any,
-) -> tuple[_after, tuple[_match_options, _trans_options, _outside]]:
+    spattern: _ArbitraryDict,
+) -> tuple[
+    _AfterProcessing, tuple[_MatchOptions, _TranslationOptions, _OutsideOptions]
+]:
     """
     This function extracts contents needed from yaml file with regex.
 
@@ -274,8 +277,8 @@ def extract(
             )
         collections = setting.get("collections")
     # ----------------------------------------------------------------
-    trans_options: _trans_options = {}
-    match_options: _match_options = {}
+    trans_options: _TranslationOptions = {}
+    match_options: _MatchOptions = {}
     try:
         for part, sdef in spattern.items():
             for opt in sdef.values():
@@ -335,7 +338,7 @@ def err_report(
     part: str,
     msg: str,
     name: str,
-    match: Match,
+    match: _StringMatch,
     tkns: dict,
     content: str,
     matchstr: str,
@@ -360,7 +363,7 @@ def err_report(
 
 
 def matching(
-    content: str, match_options: _match_options, isrecursion: bool
+    content: str, match_options: _MatchOptions, isrecursion: bool
 ) -> dict[str, list[tuple[str, dict[str, str]]]]:
     """
     Matches parts of source code.
@@ -422,7 +425,7 @@ def matching(
 matching.oncedone = []  # List of "once: True" parts that are already matched
 
 
-def outside_err(outside: _outside, content: str):
+def outside_err(outside: _OutsideOptions, content: str):
     """Finds syntax errors in the source code and shows error messages."""
     for part, errors in outside.items():
         for name, error in errors.items():
@@ -440,7 +443,7 @@ def outside_err(outside: _outside, content: str):
 
 
 def convert(
-    yaml_details: _yaml_details,
+    yaml_details: _ParseYAMLDetails,
     content: str,
     isrecursion: bool = False,
     donly: Union[tuple[str, ...]] = (),
@@ -566,7 +569,7 @@ def load_yaml(file: str) -> dict[str, Any]:
         exit(f"{error_msg} {file} not found")
 
 
-def grab(source: str, target: str) -> tuple[_after, _yaml_details]:
+def grab(source: str, target: str) -> tuple[_AfterProcessing, _ParseYAMLDetails]:
     """
     Gets details from source and target yaml files.
 
@@ -613,7 +616,7 @@ def grab_var(file: str) -> _VariablesDict:
     return variables
 
 
-def get_ltz(filename: str) -> tuple[_after, _yaml_details]:
+def get_ltz(filename: str) -> tuple[_AfterProcessing, _ParseYAMLDetails]:
     """
     Loads compiled yaml_details from .ltz file.
 
