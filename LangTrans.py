@@ -31,12 +31,15 @@ _MatchOptions = Dict[
         _RegexPattern,  # regex
         Tuple[str, ...],  # tokens
         bool,  # Global
-        Tuple[_UnmatchedPatterns, Tuple[_RegexPattern, ...]],  # untkn  # unpart
+        Tuple[
+            _UnmatchedPatterns, Tuple[_RegexPattern, ...]
+        ],  # unmatched_tokens  # unmatched_parts
         Dict[str, str],  # defaults
         bool,  # once
         Optional[_ErrorDictionary],  # err
     ],
 ]
+_MatchParts = Dict[str, List[Tuple[str, Dict[str, str]]]]
 _OutsideOptions = Optional[Dict[str, _ErrorDictionary]]
 _TokenPattern = Optional[Dict[str, str]]
 _NextOptions = Optional[Union[Tuple[str, ...]]]
@@ -165,9 +168,9 @@ def tknoptions(
                                 for reprgx in data
                             ]
                         )
-                    except re_error as err:
+                    except re_error as error:
                         print(f"Location: Replace option for token({tkname})")
-                        raise err
+                        raise error
                 elif opn == "call":
                     opns["call"] = check_collections(data, collections)
                 elif opn == "unmatch":
@@ -180,9 +183,9 @@ def tknoptions(
                                 for rgx in data
                             ]
                         )
-                    except re_error as err:
+                    except re_error as error:
                         print(f"Location: Unmatch for token({tkname})")
-                        raise err
+                        raise error
                 elif opn == "default":
                     defaults[tkname] = data
             if "," in tkname:  # Spliting Token options
@@ -456,74 +459,96 @@ def report_syntax_error(
     exit()
 
 
-def matching(
-    content: str, match_options: _MatchOptions, isrecursion: bool
-) -> Dict[str, List[Tuple[str, Dict[str, str]]]]:
+# List of "once: True" parts that are already matched
+once_complete = []
+
+
+def match_parts(
+    source_content: str, match_options: _MatchOptions, is_recursion: bool
+) -> _MatchParts:
     """
     Matches parts of source code.
 
-    :param content: source code.
-    :type content: str
+    :param source_code: source code.
+    :type source_code: str
 
     :param match_options: Options for each part in yaml file.
     :type match_options: _MatchOptions
 
-    :param isrecursion: Boolean to find if the convert function is in recursion or not.
-    :type isrecursion: bool
+    :param is_recursive: Boolean to find if the convert function is in recursion or not.
+    :type is_recursive: bool
 
     :return: Return matched parts and tokens.
-    :rtype: Dict[str, List[Tuple[str, Dict[str, str]]]]
+    :rtype: _MatchParts
+
+    This function takes in source code and match options for each part and returns
+    matched parts and tokens. It also checks for errors in the source code and
+    terminates the program if any error is found.
     """
-    partmatches = {}
-    oncedone = matching.oncedone
+
+    part_matches = {}
     for part, options in match_options.items():
-        # Unmatches
-        pattern, tknames, global_chk, (untkn, unpart), defaults, once, err = options
-        if not isrecursion:
-            if not global_chk:
-                continue  # For "global: False"
-            if once:  # For parts match once
-                if part in oncedone:
-                    continue
-                matching.oncedone.append(part)
-        partmatch = []  # Part matching
-        for match in pattern.finditer(content):
-            matchstr: str = match.group()
-            if unpart and any((bool(rgx.search(matchstr)) for rgx in unpart)):
+        (
+            part_pattern,
+            token_names,
+            is_global,
+            (unmatched_tokens, unmatched_parts),
+            defaults,
+            once,
+            err,
+        ) = options
+        if not is_recursion:
+            if not is_global:
                 continue
-            match = {  # Assigning default value for None
-                tkname: (m if m is not None else defaults.get(tkname, ""))
-                for tkname, m in zip(tknames, match.groups())
+            if once:
+                if part in once_complete:
+                    continue
+                once_complete.append(part)
+        part_match = []  # Part matches
+        for match in part_pattern.finditer(source_content):
+            match_string: str = match.group()
+            if unmatched_parts and any(
+                (bool(rgx.search(match_string)) for rgx in unmatched_parts)
+            ):
+                continue
+            token_match = {
+                token_match_name: (
+                    m if m is not None else defaults.get(token_match_name, "")
+                )
+                for token_match_name, m in zip(token_names, match.groups())
             }
             if err:  # If error definition exists
                 for name, error in err.items():  # Static Code Analysis
-                    err_match = error["regex"].search(matchstr)
+                    regex = (
+                        error["regex"]
+                        if isinstance(error["regex"], Pattern)
+                        else re_error(error["regex"])
+                    )
+                    err_match = regex.search(match_string)
+
+                    # err_match = error["regex"].search(match_string)
                     if err_match:
                         report_syntax_error(
                             part,
                             error["msg"],
                             name,
                             err_match,
-                            match,
-                            content,
-                            matchstr,
+                            token_match,
+                            source_content,
+                            match_string,
                         )
-                        # Token names and matched tokens
-            if untkn and any(
+            if unmatched_tokens and any(
                 (  # Checking unmatch on every token
-                    bool(rgx.search(match))
-                    for match, tkname in match.items()
-                    for rgx in untkn.get(tkname, ())
+                    bool(rgx.search(match_string))
+                    for token_match_name, match_string in token_match.items()
+                    for rgx in unmatched_tokens.get(token_match_name, ())
                 )
             ):
                 continue
-            partmatch.append((matchstr, match))
-        if partmatch:
-            partmatches.update({part: partmatch})
-    return partmatches
-
-
-matching.oncedone = []  # List of "once: True" parts that are already matched
+            part_match.append((match_string, token_match))
+        if part_match:
+            part_matches.update({part: part_match})
+    return part_matches
 
 
 def find_outside_errors(outside_options: _OutsideOptions, source_code: str) -> None:
@@ -574,7 +599,7 @@ def convert_syntax(
     """
     This function converts new syntax to original syntax as described in extracted_yaml_details.
 
-    :param extracted_yaml_details: Extracted from yaml includes matching patterns
+    :param extracted_yaml_details: Extracted from yaml includes match_parts patterns
     :type extracted_yaml_details: _ParseYAMLDetails
 
     :param original_content: Original content in the new syntax that needs to be converted.
@@ -589,7 +614,7 @@ def convert_syntax(
     :return: The converted content in the original syntax.
     :rtype: str
 
-    This function first matches the original content with the matching patterns in the
+    This function first matches the original content with the match_parts patterns in the
     extracted_yaml_details. If a match is found, the corresponding transformation is applied to
     the matched part. This process is repeated until no more matches are found.
     """
@@ -606,7 +631,7 @@ def convert_syntax(
         find_outside_errors(outside_errors, original_content)
 
     while True:
-        matched_parts = matching(original_content, match_rules, is_recursive)
+        matched_parts = match_parts(original_content, match_rules, is_recursive)
         if not matched_parts:  # Break when no match found
             break
         elif iteration_count > 100:
@@ -744,8 +769,15 @@ def extract_yaml_details(
     Extracts details from source and target YAML files.
 
     :param source_path: The path to the source YAML file.
+    :type source_path: str
+
     :param target_path: The path to the target YAML file.
+    :type target_path: str
+
     :return: A tuple containing the after command and YAML details.
+    :rtype: Tuple[_AfterProcessing, _ParseYAMLDetails]
+
+    :raises ValueError: If the source YAML file is invalid.
     """
     source_yaml = load_yaml_file(source_path)
     target_yaml = load_yaml_file(target_path)
@@ -768,40 +800,8 @@ def extract_yaml_details(
                 continue
             raise ValueError(f"{error_msg} Template for {part} not found")
 
-    after_command, yaml_details = extract(source_yaml)
-    return after_command, (yaml_details, target_yaml)
-
-
-# def extract_yaml_details(
-#     source: str, target: str
-# ) -> Tuple[_AfterProcessing, _ParseYAMLDetails]:
-#     """
-#     Gets details from source and target yaml files.
-
-#     :param argv: Array of arguments.
-#     :param l: Location of the argument needed.
-#     :return: The after command and yaml details.
-#     """
-#     spattern = load_yaml_file(source)
-#     tpattern = load_yaml_file(target)
-#     for part in spattern:  # Template checking
-#         if not (part in tpattern or part == "settings"):
-#             if part.startswith("_"):  # For parts with same pattern
-#                 bpart = part[2:]  # Base part
-#                 if bpart in spattern:  # Since template is same, tokens also same
-#                     spattern[part]["tokens"] = spattern[bpart]["tokens"]
-#                 else:
-#                     exit(f"{error_msg} {bpart} for {part} not found")
-#                 if bpart in tpattern:  # Template checking
-#                     tpattern[part] = tpattern[bpart]
-#                     continue
-#                 part = bpart
-#             if not spattern[part]["tokens"]:
-#                 tpattern[part] = ""
-#                 continue
-#             exit(f"{error_msg} Template for {part} not found")
-#     after, rest = extract(spattern)
-#     return after, (rest, tpattern)
+    after_command, extracted_source_yaml = extract(source_yaml)
+    return after_command, (extracted_source_yaml, target_yaml)
 
 
 def load_variables(file_path: str) -> _VariablesDict:
@@ -985,5 +985,5 @@ if __name__ == "__main__":
             if inp.lower() != "n":
                 system(after)
     except Exception as err:
-        # print(Fore.RED + "Program Error:", err)
-        raise err
+        print(Fore.RED + "Program Error:", err)
+        # raise err
