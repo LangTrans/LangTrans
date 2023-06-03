@@ -135,75 +135,100 @@ def check_collections(calls: List[str], collections: _Collections) -> Tuple[str,
     return tuple(new_collections)
 
 
-def tknoptions(
-    sdef: Dict[str, Any], collections: _Collections, variables: _VariablesDict
-) -> Tuple[
-    _UnmatchedPatterns, Dict[str, str], Tuple[_TokenOptions, Optional[Tuple[str, ...]]]
+def extract_token_options(
+    definition: Dict[str, Any], collections: _Collections, variables: _VariablesDict
+) -> Optional[
+    Tuple[
+        _UnmatchedPatterns,
+        Dict[str, str],
+        Tuple[_TokenOptions, Optional[Tuple[str, ...]]],
+    ]
 ]:
     """
-    This function extracts token options from a yaml file.
+    Extracts token options from the definition.
 
-    :param sdef: Contains token options.
+    :param definition: Contains token options.
+    :type definition: Dict[str, Any]
+
     :param collections: Dictionary of collections and their names.
-    :return: unmatches, default values, translation options, and next call list.
+    :type collections: _Collections
+
+    :return: unmatched_patterns, default values, translation options, and next call list.
+    :rtype: Tuple[_UnmatchedPatterns, Dict[str, str], Tuple[_TokenOptions,
+            Optional[Tuple[str, ...]]]]
+
+    :raises KeyError: If a collection is not found.
+
+    It extracts the token options from the definition and returns the unmatched patterns,
+    default values, translation options, and next call list.
     """
-    trans_option: _TokenOptions = {}
-    unmatches: _UnmatchedPatterns = {}
+
+    translation_options: _TokenOptions = {}
+    unmatched_patterns: _UnmatchedPatterns = {}
     defaults: Dict[str, str] = {}
-    tkns: list = sdef["tokens"]
-    for tkname, opts in sdef.items():
-        if isinstance(opts, Dict):
-            opns: _TokenProcessingOptions = {}
+    tokens: list = definition.get("tokens", [])
+
+    for token_name, options in definition.items():
+        if isinstance(options, Dict):
+            processing_options: _TokenProcessingOptions = {}
             # Token options
-            for opn, data in opts.items():
-                if opn == "eachline":
-                    opns["eachline"] = data
-                elif opn == "replace":
+            for option, value in options.items():
+                if option == "eachline":
+                    processing_options["eachline"] = value
+                elif option == "replace":
                     try:
-                        opns["replace"] = tuple(
+                        processing_options["replace"] = tuple(
                             [
                                 (sanitize_regex(reprgx[0]), reprgx[1])  # For replacing
                                 if len(reprgx) == 2
                                 else (sanitize_regex(reprgx[0]), "")  # For removing
-                                for reprgx in data
+                                for reprgx in value
                             ]
                         )
                     except re_error as error:
-                        print(f"Location: Replace option for token({tkname})")
+                        print(f"Location: Replace option for token({token_name})")
                         raise error
-                elif opn == "call":
-                    opns["call"] = check_collections(data, collections)
-                elif opn == "unmatch":
-                    if not isinstance(data, list):
-                        data = (data,)
+                elif option == "call":
+                    processing_options["call"] = check_collections(value, collections)
+                elif option == "unmatch":
+                    if not isinstance(value, list):
+                        value = (value,)
                     try:  # Compiling regex
-                        unmatches[tkname] = tuple(
+                        unmatched_patterns[token_name] = tuple(
                             [
                                 sanitize_regex(replace_variables(variables, rgx))
-                                for rgx in data
+                                for rgx in value
                             ]
                         )
                     except re_error as error:
-                        print(f"Location: Unmatch for token({tkname})")
+                        print(f"Location: Unmatch for token({token_name})")
                         raise error
-                elif opn == "default":
-                    defaults[tkname] = data
-            if "," in tkname:  # Spliting Token options
-                for tk in tkname.split(","):
-                    if tk not in tkns:
-                        return print(f"Error: {tk} not found in tokens")  # TypeError
-                    trans_option[tk] = opns
+                elif option == "default":
+                    defaults[token_name] = value
+            if "," in token_name:  # Splitting Token options
+                for token in token_name.split(","):
+                    if token not in tokens:
+                        return print(f"Error: {token} not found in tokens")  # TypeError
+                    translation_options[token] = processing_options
                 continue
-            if tkname not in tkns:
-                return print(f"{error_msg} {tkname} not found in tokens")  # TypeError
-            trans_option[tkname] = opns
-            # Next Options
+            if token_name not in tokens:
+                return print(
+                    f"{error_msg} {token_name} not found in tokens"
+                )  # TypeError
+            translation_options[token_name] = processing_options
+
+    # Next Options
+    next_value = definition.get("next", None)
+    next_collections = (
+        check_collections(next_value, collections) if next_value else None
+    )
+
     return (
-        unmatches,
+        unmatched_patterns,
         defaults,
         (
-            trans_option,
-            (check_collections(sdef["next"], collections) if "next" in sdef else None),
+            translation_options,
+            next_collections,
         ),
     )
 
@@ -347,7 +372,13 @@ def extract(
                         error_msg
                         + " Number of token names is not equal to number of capture groups"
                     )
-            unmatches, defaults, tknopns = tknoptions(sdef, collections, variables)
+            result = extract_token_options(sdef, collections, variables)
+            if result is None:
+                print(f"Error: failed to extract token options for part: {part}")
+                continue
+
+            unmatches, defaults, tknopns = result
+
             if m := var_rgx.search(regex.pattern):
                 print(Fore.YELLOW + "Warning:", m.group(), "not found")
             match_options[part] = (
@@ -904,6 +935,7 @@ if __name__ == "__main__":
         exit("SyntaxRepr,PatternRepr: without extension(.yaml)")
     elif len(argv) < 3:
         exit(error_msg + " Insufficient number of arguments")
+
     try:
         # Terminal Options-------------------------------------------
         YES = "-y" in argv  # To run after command automatically
@@ -986,4 +1018,3 @@ if __name__ == "__main__":
                 system(after)
     except Exception as err:
         print(Fore.RED + "Program Error:", err)
-        # raise err
