@@ -15,7 +15,7 @@ from os.path import dirname
 import os
 from sys import argv, exit
 from functools import partial
-from typing import Any, Match, Pattern, Dict, Union, Optional, List
+from typing import Any, Match, Pattern, Dict, Union, Optional, List, Tuple
 from colorama import init, Fore
 
 # Types------------------------------
@@ -52,6 +52,7 @@ _Collections = Optional[dict[str, Optional[list[str]]]]
 _AfterProcessing = Optional[Union[list[str], str, dict[str, str]]]
 _ArbitraryDict = dict[str, dict[str, Any]]
 _VariablesDict = dict[str, str]
+_TargetStringLines = Optional[Tuple[int, int, List[str]]]
 
 # -----------------------------------
 #  For colored error - Intialiazing colorama
@@ -363,7 +364,7 @@ def err_report(
     matchstr: str,
 ):
     """Shows error messages for syntax errors."""
-    pos, l, indexed = getotalines(content.splitlines(), matchstr)
+    pos, l, indexed = find_substring_lines(content.splitlines(), matchstr)
     err_part = match.group()
     if part:  # Part Name
         print(f"[{Fore.MAGENTA + part + Fore.RESET}]")
@@ -388,9 +389,16 @@ def matching(
     Matches parts of source code.
 
     :param content: source code.
+    :type content: str
+
     :param match_options: Options for each part in yaml file.
+    :type match_options: _MatchOptions
+
     :param isrecursion: Boolean to find if the convert function is in recursion or not.
+    :type isrecursion: bool
+
     :return: Return matched parts and tokens.
+    :rtype: dict[str, list[tuple[str, dict[str, str]]]]
     """
     partmatches = {}
     oncedone = matching.oncedone
@@ -539,29 +547,37 @@ def convert(
     return content
 
 
-def getotalines(lines: list[str], substring: str):
+def find_substring_lines(
+    code_lines: List[str], target_string: str
+) -> _TargetStringLines:
     """
-    Finds line in which the substring is located.
+    Finds the lines in which the target string is located.
 
-    :param lines: List with lines of code being checked for substring.
-    :param substring: Substring to be found in lines.
-    :return: Lines where the substring is located or nothing if no match is found.
+    :param code_lines: A list of lines of code being checked for the target string.
+    :type code_lines: List[str]
+
+    :param target_string: The string to be found in the lines.
+    :type target_string: str
+
+    :return: Tuple with starting position, length, and a list of the target string lines.
+    :rtype: Optional[Tuple[int, int, List[str]]]
     """
-    sublines = substring.splitlines()
-    sublen = len(sublines)
-    for pos, line in enumerate(lines):
-        if sublines[0] in line:  # If first line matched
-            if pos >= (len(lines) - sublen):  # If reached end of string
-                return
-            indexed = lines[pos : pos + sublen]  # rest of line
-            for linepart, subline in zip(indexed, sublines[1:]):  # Check rest of line
-                if subline not in linepart:  # Break if subline not matched
-                    break
-            else:  # Break if sublines are matched
-                break
-    else:  # Return if sublines are not matched in lines
-        return  # No match Found
-    return pos, sublen, indexed  # dict(zip(sublines,indexed))
+
+    target_lines = target_string.splitlines()
+    target_length = len(target_lines)
+    possible_start_indices = len(code_lines) - target_length + 1
+
+    for target_index in range(possible_start_indices):
+        if target_lines[0] in code_lines[target_index]:  # If first target_line matched
+            matched_lines = code_lines[
+                target_index : target_index + target_length
+            ]  # rest of target_line
+            if all(
+                subline in line_part
+                for subline, line_part in zip(target_lines[1:], matched_lines)
+            ):
+                return target_index, target_length, matched_lines
+    return None
 
 
 def load_yaml_file(file: str) -> dict[str, Any]:
