@@ -50,7 +50,7 @@ _ParseYAMLDetails = Tuple[
 ]
 _Collections = Optional[Dict[str, Optional[List[str]]]]
 _AfterProcessing = Optional[Union[List[str], str, Dict[str, str]]]
-_ArbitraryDict = Dict[str, Dict[str, Any], ...]
+_ArbitraryDict = Dict[str, Dict[str, Any]]
 _VariablesDict = Dict[str, str]
 _TargetStringLines = Optional[Tuple[int, int, List[str]]]
 _CompileErrorTuple = Tuple[Dict[str, _ErrorDictionary], _OutsideOptions]
@@ -63,8 +63,7 @@ error_msg = Fore.RED + "Error:"
 
 def sanitize_regex(regex: str) -> _RegexPattern:
     """
-    Sanitizes the regular expression pattern, by replacing spaces with `\s+` and
-    `~` with `\s*` to allow for optional whitespace.
+    Sanitizes the regular expression pattern.
 
     :param regex: The regular expression pattern to compile.
     :type regex: str
@@ -73,6 +72,9 @@ def sanitize_regex(regex: str) -> _RegexPattern:
     :rtype: _RegexPattern
 
     :raises re.error: If the regular expression pattern is invalid.
+
+    It sanitizes the pattern by replacing spaces with `\s+` and `~` with `\s*` to allow
+    for optional whitespace. It then compiles the pattern and returns the compiled.
     """
 
     regex = regex.replace(" ", r"\s+").replace("~", r"\s*")
@@ -172,7 +174,7 @@ def tknoptions(
                     try:  # Compiling regex
                         unmatches[tkname] = tuple(
                             [
-                                sanitize_regex(replace_variable(variables, rgx))
+                                sanitize_regex(replace_variables(variables, rgx))
                                 for rgx in data
                             ]
                         )
@@ -201,9 +203,12 @@ def tknoptions(
     )
 
 
-def replace_variable(global_vars: _VariablesDict, source_string: str) -> str:
+def replace_variables(
+    source_string: str,
+    global_variables: _VariablesDict,
+) -> str:
     """
-    Replaces <var_name> with its var_value.
+    Replaces variable_name with its variable_value.
 
     :param global_vars: A dictionary of global variables.
     :type global_vars: _VariablesDict
@@ -214,13 +219,13 @@ def replace_variable(global_vars: _VariablesDict, source_string: str) -> str:
     :return: A variable-replaced string.
     :rtype: str
 
-    This function replaces all occurrences of <var_name> in the `source_string` string
-    with their corresponding values in the `global_vars` dictionary. The replacement is
-    done in reverse order of the items in the `global_vars` dictionary to ensure that
-    longer variable names are replaced before shorter ones.
+    This function replaces all occurrences of variable_name in the `source_string` string
+    with their corresponding values in the `global_variables` dictionary. The replacement
+    is done in reverse order of the items to ensure that longer variable names are
+    replaced before shorter ones.
     """
-    for var_name, var_value in reversed(global_vars.items()):
-        source_string = source_string.replace(f"<{var_name}>", var_value)
+    for variable_name, variable_value in reversed(global_variables.items()):
+        source_string = source_string.replace(f"<{variable_name}>", variable_value)
     return source_string
 
 
@@ -247,7 +252,7 @@ def compile_error_regexes(
         else:
             result[error_name] = error.copy()
             result[error_name]["regex"] = sanitize_regex(
-                replace_variable(global_variables, error["regex"])
+                replace_variables(global_variables, error["regex"])
             )
 
     return result
@@ -322,9 +327,9 @@ def extract(
                     for replace in opt[
                         "replace"
                     ]:  # Replacing variables in replace option
-                        replace[0] = replace_variable(variables, replace[0])
+                        replace[0] = replace_variables(variables, replace[0])
             regex = sanitize_regex(
-                replace_variable(variables, sdef["regex"])
+                replace_variables(variables, sdef["regex"])
             )  # Compiled regex without variables
             tokens = tuple(sdef["tokens"])  # Token_names
             if regex.groups != len(tokens):
@@ -349,7 +354,7 @@ def extract(
                     (  # Unmatch regexs for part
                         tuple(
                             [
-                                sanitize_regex(replace_variable(variables, unmatch))
+                                sanitize_regex(replace_variables(variables, unmatch))
                                 for unmatch in sdef["unmatch"]
                             ]
                         )
@@ -388,9 +393,9 @@ def err_report(
     lineno = str(pos + 1) + " |"
     # error Line
     print(Fore.CYAN + lineno, line.replace(err_part, Fore.RED + err_part + Fore.RESET))
-    total_msg = replace_variable(  # Replacing variables in main and err match
+    total_msg = replace_variables(  # Replacing variables in main and err match
         {"$" + str(l): tkn for l, tkn in enumerate(match.groups(), start=1)},  # Err
-        replace_variable(tkns, msg),  # Main
+        replace_variables(tkns, msg),  # Main
     )
     # Error Name
     print(" " * (line.index(err_part) + len(lineno)), Fore.RED + name.replace("_", " "))
@@ -550,8 +555,8 @@ def convert(
                             )
                     tknmatch[tkname] = match
                     # Replacing token names with its value
-                temp_pattern = replace_variable(
-                    tknmatch, replace_variable(tknmatch, temp_pattern)
+                temp_pattern = replace_variables(
+                    tknmatch, replace_variables(tknmatch, temp_pattern)
                 )
                 # Token values added from other tokens
                 if next_optns:  # Next Part option
