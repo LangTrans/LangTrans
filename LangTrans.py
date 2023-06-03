@@ -10,22 +10,12 @@ MIT License
 Copyright (c) 2021 Bijin Regi Panicker
 See LICENSE file for orginal text.
 """
-from os import system
+from os import system, name, path
 from os.path import dirname
+import os
 from sys import argv, exit
 from functools import partial
-from typing import (
-    Any,
-    Match,
-    Pattern,
-    TypedDict,
-    Union,
-    Optional,
-    List,
-    Tuple,
-    Dict,
-    Callable,
-)
+from typing import Any, Match, Pattern, TypedDict, Union, Optional, List
 from colorama import init, Fore
 
 # Types------------------------------
@@ -59,45 +49,58 @@ _tknopts = dict[str, _opts]
 _opns = tuple[_tknopts, _next_optns]
 _trans_options = dict[str, _opns]
 _yaml_details = tuple[tuple[_match_options, _trans_options, _outside], _tpattern]
-_collections = Optional[dict[str, Optional[list[str]]]]
+_Collections = Optional[dict[str, Optional[list[str]]]]
 _after = Optional[Union[list[str], str, dict[str, str]]]
 _any = dict[str, dict[str, Any]]
-_var = dict[str, str]
-_HandlerType = Callable[[Any, str, _collections, _var], Any]
-
+_VariablesDict = dict[str, str]
 # -----------------------------------
 #  For colored error - Intialiazing colorama
 init(autoreset=True)
 error_msg = Fore.RED + "Error:"
 
 
-def comp(regex: str) -> Pattern:
+def sanitize_regex(regex: str) -> Pattern:
     """
-    Compiles regular expression to emulate tokens(in parsers)
+    Sanitizes the regular expression pattern, by replacing spaces with `\s+` and
+    `~` with `\s*` to allow for optional whitespace.
 
-    :param regex: Regular expression.
-    :return: Compiled regular expression.
+    :param regex: The regular expression pattern to compile.
+    :type regex: str
+
+    :return: A compiled regular expression pattern object.
+    :rtype: Pattern
+
+    :raises re.error: If the regular expression pattern is invalid.
     """
 
     regex = regex.replace(" ", r"\s+").replace("~", r"\s*")
 
-    try:  # re.MULTILINE=8
-        return compile(regex, 8)
-    except rerror as err:
+    try:
+        return compile(regex, 8)  # re.MULTILINE=8
+    except re_error as error:
         print(error_msg, "Invalid regex")
-        print(err.msg)
+        print(error.msg)
         print("Regex:", regex.replace("\n", r"\n").replace("\t", r"\t"))
-        print(" " * (err.pos + 7) + "^")
-        raise err
+        print(" " * (error.pos + 7) + "^")
+        raise error
 
 
-def check_collections(calls: list[str], collections: _collections) -> tuple[str, ...]:
+def check_collections(calls: list[str], collections: _Collections) -> tuple[str, ...]:
     """
-    This function adds collections to the call list.
+    Adds collections to the call list. If a collection name starts with '$', the function
+    looks up the collection in the `collections` dictionary and replaces the collection
+    name with the collection values.
 
-    :param calls: List with collection names and part names.
-    :param collections: Dictionary of collections and its names.
-    :return: Collection replaced call list.
+    :param calls: A list of collection names and part names.
+    :type calls: list[str]
+
+    :param collections: A dictionary of collections and their names.
+    :type collections: _Collections
+
+    :return: A tuple of the collection-replaced call list.
+    :rtype: tuple[str, ...]
+
+    :raises KeyError: If a collection is not found.
     """
 
     if not collections:
@@ -111,137 +114,122 @@ def check_collections(calls: list[str], collections: _collections) -> tuple[str,
                 collection_values = collections[collection_name]
                 if collection_values is not None:
                     new_collections.extend(collection_values)
-            except KeyError as exc:
+            except KeyError as key_error:
                 raise KeyError(
                     f"Error: Collection ${collection_name} not found"
-                ) from exc
+                ) from key_error
         else:
             new_collections.append(collection)
 
     return tuple(new_collections)
 
 
-def handle_eachline(option_data: Any) -> Any:
-    return option_data
-
-
-def handle_replace(option_data: list, token_name: str) -> tuple:
-    try:
-        return tuple(
-            (comp(replace_option[0]), replace_option[1])
-            if len(replace_option) == 2
-            else (comp(replace_option[0]), "")
-            for replace_option in option_data
-        )
-    except Exception as replace_error:
-        print(f"Location: Replace option for token({token_name})")
-        raise replace_error
-
-
-def handle_call(option_data: list, collections: _collections) -> tuple:
-    return check_collections(option_data, collections)
-
-
-def handle_unmatch(
-    option_data: Union[list, str], token_name: str, variables: _var
-) -> tuple:
-    if not isinstance(option_data, list):
-        option_data = [option_data]
-    try:
-        return tuple([comp(addvar(variables, regex)) for regex in option_data])
-    except Exception as unmatch_error:
-        print(f"Location: Unmatch for token({token_name})")
-        raise unmatch_error
-
-
-def handle_default(option_data: Any) -> Any:
-    return option_data
-
-
-OPTION_HANDLERS = {
-    "eachline": handle_eachline,
-    "replace": handle_replace,
-    "call": handle_call,
-    "unmatch": handle_unmatch,
-    "default": handle_default,
-}
-
-
-def extract_token_options(
-    specification: dict[str, Any], collections: _collections, variables: _var
-) -> Dict[str, Any]:
-    token_names = specification["tokens"]
-    token_options: Dict[str, Dict[str, Any]] = {}
-
-    for token_name, options in specification.items():
-        if isinstance(options, dict):
-            current_token_options: Dict[str, Any] = {}
-            for option_name, option_data in options.items():
-                handler = OPTION_HANDLERS.get(option_name)
-                if handler:
-                    current_token_options[option_name] = handler(
-                        option_data, token_name, collections, variables
-                    )  # type: ignore
-            token_options[token_name] = current_token_options
-
-        if "," in token_name:
-            for split_token_name in token_name.split(","):
-                if split_token_name not in token_names:
-                    raise ValueError(f"Error: {split_token_name} not found in tokens")
-                token_options[split_token_name] = token_options[token_name]
-
-        if token_name not in token_names:
-            raise ValueError(f"{error_msg} {token_name} not found in tokens")
-    return token_options
-
-
-def process_token_definitions(
-    specification: dict[str, Any], collections: _collections, variables: _var
-) -> Tuple[
-    Dict[str, Any], Dict[str, str], Tuple[Dict[str, Any], Optional[Tuple[str, ...]]]
-]:
+def tknoptions(
+    sdef: dict[str, Any], collections: _Collections, variables: _VariablesDict
+) -> tuple[_unmatches, dict[str, str], tuple[_tknopts, Optional[tuple[str, ...]]]]:
     """
     This function extracts token options from a yaml file.
 
-    :param specification: Contains token options.
+    :param sdef: Contains token options.
     :param collections: Dictionary of collections and their names.
     :return: unmatches, default values, translation options, and next call list.
     """
-    token_options = extract_token_options(specification, collections, variables)
-
+    trans_option: _tknopts = {}
+    unmatches: _unmatches = {}
+    defaults: dict[str, str] = {}
+    tkns: list = sdef["tokens"]
+    for tkname, opts in sdef.items():
+        if isinstance(opts, dict):
+            opns: _opts = {}
+            # Token options
+            for opn, data in opts.items():
+                if opn == "eachline":
+                    opns["eachline"] = data
+                elif opn == "replace":
+                    try:
+                        opns["replace"] = tuple(
+                            [
+                                (sanitize_regex(reprgx[0]), reprgx[1])  # For replacing
+                                if len(reprgx) == 2
+                                else (sanitize_regex(reprgx[0]), "")  # For removing
+                                for reprgx in data
+                            ]
+                        )
+                    except re_error as err:
+                        print(f"Location: Replace option for token({tkname})")
+                        raise err
+                elif opn == "call":
+                    opns["call"] = check_collections(data, collections)
+                elif opn == "unmatch":
+                    if not isinstance(data, list):
+                        data = (data,)
+                    try:  # Compiling regex
+                        unmatches[tkname] = tuple(
+                            [
+                                sanitize_regex(replace_variable(variables, rgx))
+                                for rgx in data
+                            ]
+                        )
+                    except re_error as err:
+                        print(f"Location: Unmatch for token({tkname})")
+                        raise err
+                elif opn == "default":
+                    defaults[tkname] = data
+            if "," in tkname:  # Spliting Token options
+                for tk in tkname.split(","):
+                    if tk not in tkns:
+                        return print(f"Error: {tk} not found in tokens")  # TypeError
+                    trans_option[tk] = opns
+                continue
+            if tkname not in tkns:
+                return print(f"{error_msg} {tkname} not found in tokens")  # TypeError
+            trans_option[tkname] = opns
+            # Next Options
     return (
-        token_options.get("unmatch", {}),
-        token_options.get("default", {}),
+        unmatches,
+        defaults,
         (
-            token_options,
-            check_collections(specification.get("next", []), collections),
+            trans_option,
+            (check_collections(sdef["next"], collections) if "next" in sdef else None),
         ),
     )
 
 
-def addvar(variables: _var, rv: str):
+def replace_variable(global_vars: _VariablesDict, source_string: str):
     """
-    This function replaces <varname> with its value.
+    Replaces <var_name> with its var_value.
 
-    :param variables: Global variables.
-    :param rv: String containing <varname>.
-    :return: variable replaced string.
+    :param global_vars: A dictionary of global variables.
+    :type global_vars: _VariablesDict
+
+    :param source_string: A string containing <var_name>.
+    :type source_string: str
+
+    :return: A variable-replaced string.
+    :rtype: str
+
+    This function replaces all occurrences of <var_name> in the `source_string` string
+    with their corresponding values in the `global_vars` dictionary. The replacement is
+    done in reverse order of the items in the `global_vars` dictionary to ensure that
+    longer variable names are replaced before shorter ones.
     """
-    for varname, value in reversed(variables.items()):
-        rv = rv.replace(f"<{varname}>", value)
-    return rv
+    for var_name, var_value in reversed(global_vars.items()):
+        source_string = source_string.replace(f"<{var_name}>", var_value)
+    return source_string
 
 
-def compile_rgx(errors: _any, var: _var):
+def compile_rgx(errors: _any, var: _VariablesDict):
     for name, error in errors.items():
         if name == "outside":
             errors = compile_rgx(error, var)
             continue
-        error["regex"] = comp(addvar(var, error["regex"]))
+        error["regex"] = sanitize_regex(replace_variable(var, error["regex"]))
     return errors
 
 
-def comp_err(name: str, variables: _var) -> tuple[dict[str, err_dict], _outside]:
+def comp_err(
+    name: str, variables: _VariablesDict
+) -> tuple[dict[str, err_dict], _outside]:
     """
     Compiles regexes in an error file.
 
@@ -270,7 +258,7 @@ def extract(
     :return: after command and (match options, token options).
     """
     # Importing builtin variables
-    variables = grab_var(dirname(__file__) + "\\builtin")
+    variables = grab_var(os.path.join(dirname(__file__), "builtin"))
     # Settings-------------------------------------------------------
     after = errfile = outside = collections = None
     if "settings" in spattern:
@@ -281,26 +269,28 @@ def extract(
         if "variables" in setting:  # Adding variables in settings
             variables.update(setting["variables"])
         if "errfile" in setting:
-            errfile, outside = comp_err(setting["errfile"], variables)
+            errfile, outside = comp_err(
+                os.path.join(dirname(__file__), setting["errfile"]), variables
+            )
         collections = setting.get("collections")
     # ----------------------------------------------------------------
     trans_options: _trans_options = {}
     match_options: _match_options = {}
     try:
-        for part, specification in spattern.items():
-            for opt in specification.values():
+        for part, sdef in spattern.items():
+            for opt in sdef.values():
                 if isinstance(opt, dict) and "replace" in opt:
                     for replace in opt[
                         "replace"
                     ]:  # Replacing variables in replace option
-                        replace[0] = addvar(variables, replace[0])
-            regex = comp(
-                addvar(variables, specification["regex"])
+                        replace[0] = replace_variable(variables, replace[0])
+            regex = sanitize_regex(
+                replace_variable(variables, sdef["regex"])
             )  # Compiled regex without variables
-            tokens = tuple(specification["tokens"])  # Token_names
+            tokens = tuple(sdef["tokens"])  # Token_names
             if regex.groups != len(tokens):
                 if regex.groups == 0 and len(tokens) < 2:
-                    regex = comp(f"({regex.pattern})")
+                    regex = sanitize_regex(f"({regex.pattern})")
                 else:
                     print("Part:", part)
                     print("Token Names:", len(tokens), "Capture Groups:", regex.groups)
@@ -308,36 +298,33 @@ def extract(
                         error_msg
                         + " Number of token names is not equal to number of capture groups"
                     )
-            unmatches, defaults, tknopns = process_token_definitions(
-                specification, collections, variables
-            )
+            unmatches, defaults, tknopns = tknoptions(sdef, collections, variables)
             if m := var_rgx.search(regex.pattern):
                 print(Fore.YELLOW + "Warning:", m.group(), "not found")
             match_options[part] = (
                 regex,
                 tokens,
-                "global" not in specification
-                or specification["global"],  # Checking Global
+                "global" not in sdef or sdef["global"],  # Checking Global
                 (  # Unmatch regexs for tokens
                     unmatches,
                     (  # Unmatch regexs for part
                         tuple(
                             [
-                                comp(addvar(variables, unmatch))
-                                for unmatch in specification["unmatch"]
+                                sanitize_regex(replace_variable(variables, unmatch))
+                                for unmatch in sdef["unmatch"]
                             ]
                         )
-                        if "unmatch" in specification
+                        if "unmatch" in sdef
                         else ()
                     ),
                 ),
                 defaults,
-                "once" in specification and specification["once"],
+                "once" in sdef and sdef["once"],
                 (errfile[part] if errfile and part in errfile else None),
             )
             trans_options[part] = tknopns
 
-    except (rerror, TypeError):  # Regex and unknown token option error
+    except (re_error, TypeError):  # Regex and unknown token option error
         exit(f"Part:{part}")
     except KeyError as err:  # For part without regex or tokens
         exit(f"{error_msg} {err} not found in {part}")
@@ -362,9 +349,9 @@ def err_report(
     lineno = str(pos + 1) + " |"
     # error Line
     print(Fore.CYAN + lineno, line.replace(err_part, Fore.RED + err_part + Fore.RESET))
-    total_msg = addvar(  # Replacing variables in main and err match
+    total_msg = replace_variable(  # Replacing variables in main and err match
         {"$" + str(l): tkn for l, tkn in enumerate(match.groups(), start=1)},  # Err
-        addvar(tkns, msg),  # Main
+        replace_variable(tkns, msg),  # Main
     )
     # Error Name
     print(" " * (line.index(err_part) + len(lineno)), Fore.RED + name.replace("_", " "))
@@ -517,7 +504,9 @@ def convert(
                             )
                     tknmatch[tkname] = match
                     # Replacing token names with its value
-                temp_pattern = addvar(tknmatch, addvar(tknmatch, temp_pattern))
+                temp_pattern = replace_variable(
+                    tknmatch, replace_variable(tknmatch, temp_pattern)
+                )
                 # Token values added from other tokens
                 if next_optns:  # Next Part option
                     temp_pattern = re_convert(content=temp_pattern, donly=next_optns)
@@ -607,7 +596,7 @@ def grab(source: str, target: str) -> tuple[_after, _yaml_details]:
     return after, (rest, tpattern)
 
 
-def grab_var(file: str) -> _var:
+def grab_var(file: str) -> _VariablesDict:
     """
     Loads variables from an external file.
 
@@ -699,7 +688,7 @@ if __name__ == "__main__":
         # ------------------------------------------------------------
         if "-c" in argv:  # Compile into ltz
             from pickle import dump, HIGHEST_PROTOCOL
-            from re import compile, error as rerror
+            from re import compile, error as re_error
 
             var_rgx = compile(r"<\w+>")
             argv[-1] += ".ltz"
@@ -714,7 +703,7 @@ if __name__ == "__main__":
             doc(argv[-1])
             exit()
         else:
-            from re import compile, error as rerror
+            from re import compile, error as re_error
 
             var_rgx = compile(r"<\w+>")
             yaml_details = grab(argv[3], argv[4])
