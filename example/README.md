@@ -1,4 +1,5 @@
 # Py_Trans
+
 Customized python syntax
 
 <table>
@@ -19,51 +20,39 @@ Customized python syntax
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 p"Hello World"
 ```
 
-
 </td>
 
 <td>
-
 
 ```py
 print("Hello World")
 ```
 
-
 </td>
 
 </tr>
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 inc = (x) => x+1
 ```
 
-
 </td>
 
 <td>
 
-
 ```py
 inc = lambda x: x+1
 ```
-
 
 </td>
 
@@ -71,80 +60,62 @@ inc = lambda x: x+1
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 twice(x) = 2*x
 add(x,y) = x+y
 ```
 
-
 </td>
 
 <td>
-
 
 ```py
 twice = lambda x:2*x
 add = lambda x,y:x+y
 ```
 
-
 </td>
 
 </tr>
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 1 -> inc
 |> twice -> print
 ```
 
-
 </td>
 
 <td>
-
 
 ```py
 print(twice(inc(1)))
 ```
 
-
 </td>
 
 </tr>
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 print<-inc<-twice<-1
 ```
 
-
 </td>
 
 <td>
 
-
 ```py
 print(inc(twice(1)))
 ```
-
 
 </td>
 
@@ -152,20 +123,15 @@ print(inc(twice(1)))
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 try inc("1") Exception print("Error:",err)
 ```
 
-
 </td>
 
 <td>
-
 
 ```py
 try:
@@ -174,32 +140,25 @@ except Exception as err:
   print("Error:",err)
 ```
 
-
 </td>
 
 </tr>
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 print((x||True)?"Done":"Failed")
 ```
 
-
 </td>
 
 <td>
 
-
 ```py
 print("Done" if (x if 'x' in locals() else True) else "Failed")
 ```
-
 
 </td>
 
@@ -207,52 +166,40 @@ print("Done" if (x if 'x' in locals() else True) else "Failed")
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 print('x is not defined') if !x
 ```
 
-
 </td>
 
 <td>
-
 
 ```py
 if 'x' not in locals():
    print('x is not defined')
 ```
 
-
 </td>
 
 </tr>
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 print((inc+twice)(3))
 ```
 
-
 </td>
 
 <td>
 
-
 ```py
 print(inc(3)+twice(3))
 ```
-
 
 </td>
 
@@ -260,10 +207,7 @@ print(inc(3)+twice(3))
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 make type name(object):
@@ -279,11 +223,9 @@ make dict test:
     that = "that"
 ```
 
-
 </td>
 
 <td>
-
 
 ```py
 def name():
@@ -304,17 +246,13 @@ def test():
 test = test()
 ```
 
-
 </td>
 
 </tr>
 
 <tr>
 
-
-
 <td>
-
 
 ```py
 #scope1#
@@ -326,11 +264,9 @@ print("Scope2")
 print("Done")
 ```
 
-
 </td>
 
 <td>
-
 
 ```py
 def scope1():
@@ -343,7 +279,6 @@ def scope2():
     print("Done")
 scope2()
 ```
-
 
 </td>
 
