@@ -1,5 +1,6 @@
 import pytest
 import re
+import os
 from re import error as re_error
 from LangTrans.LangTrans import sanitize_regex
 from LangTrans.LangTrans import check_collections
@@ -19,7 +20,11 @@ from LangTrans.LangTrans import load_variables
 from LangTrans.LangTrans import load_compiled_yaml_details
 from LangTrans.LangTrans import print_yaml_documentation
 
+
+
 # test sanitize_regex
+
+
 
 # test check_collections
 class TestCheckCollections:
@@ -57,19 +62,73 @@ class TestCheckCollections:
         collections = {"x": None}
         result = check_collections(calls, collections)
         assert result == ("a", "c")
+
+
+
 # test extract_token_options
 
+
+
 # test replace_variables
+@pytest.fixture
+def global_variables():
+    return {
+        "var1": "Value1",
+        "var2": "Value2",
+        "longer_var": "LongerValue",
+    }
+
+def test_replace_variables_single(global_variables):
+    source_string = "This is a test with <var1>."
+    expected_result = "This is a test with Value1."
+    result = replace_variables(global_variables, source_string)
+    assert result == expected_result
+
+def test_replace_variables_multiple(global_variables):
+    source_string = "Replace <var1> and <var2>."
+    expected_result = "Replace Value1 and Value2."
+    result = replace_variables(global_variables, source_string)
+    assert result == expected_result
+
+def test_replace_variables_longer(global_variables):
+    source_string = "Replace <longer_var> before <var2>."
+    expected_result = "Replace LongerValue before Value2."
+    result = replace_variables(global_variables, source_string)
+    assert result == expected_result
+
+def test_replace_variables_not_found(global_variables):
+    source_string = "No variables here."
+    expected_result = "No variables here."
+    result = replace_variables(global_variables, source_string)
+    assert result == expected_result
+
+def test_replace_variables_empty(global_variables):
+    source_string = ""
+    expected_result = ""
+    result = replace_variables(global_variables, source_string)
+    assert result == expected_result
+
+
 
 # test compile_error_regexes
 
+
+
 # test compile_error_regex_in_file
+
+
 
 # test extract
 
+
+
 # test report_syntax_error
 
+
+
 # test match_parts
+
+
 
 # test find_outside_errors
 
