@@ -2,6 +2,7 @@ import pytest
 import re
 import os
 from re import error as re_error
+from re import compile as re_compile
 from LangTrans.LangTrans import sanitize_regex
 from LangTrans.LangTrans import check_collections
 from LangTrans.LangTrans import extract_token_options
@@ -12,7 +13,7 @@ from LangTrans.LangTrans import extract
 from LangTrans.LangTrans import report_syntax_error
 from LangTrans.LangTrans import match_parts
 from LangTrans.LangTrans import find_outside_errors
-from LangTrans.LangTrans import convert_syntax
+from LangTrans.LangTrans import convert_syntax, _ParseYAMLDetails
 from LangTrans.LangTrans import find_substring_lines
 from LangTrans.LangTrans import load_yaml_file
 from LangTrans.LangTrans import extract_yaml_details
@@ -132,11 +133,56 @@ def test_replace_variables_empty(global_variables):
 
 # test find_outside_errors
 
+
+
 # test convert_syntax
+@pytest.fixture
+def example_yaml_details():
+    match_rules = {
+        'part1': 'pattern1',
+        'part2': 'pattern2'
+    }
+    transform_rules = {
+        'part1': ({"token1": {"replace": [("pattern", "replacement")]}}, None),
+        'part2': ({"token2": {"eachline": "<line>"}}, None)
+    }
+    outside_errors = None
+    pattern_templates = {'part1': '<pattern1>', 'part2': '<pattern2>'}
+
+    return (
+        (match_rules, transform_rules, outside_errors),
+        pattern_templates
+    )
+
 
 # test find_substring_lines
 
+
+
 # test load_yaml_file
+class MockFile:
+    def __init__(self, content):
+        self.content = content
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+    def read(self):
+        return self.content
+
+def mock_open(file, *args, **kwargs):
+    if file.endswith(".yaml"):
+        return MockFile("data: example")
+    else:
+        raise FileNotFoundError
+
+# Apply the mock_open function to the built-in open function
+@pytest.fixture(autouse=True)
+def mock_builtin_open(monkeypatch):
+    monkeypatch.setattr("builtins.open", mock_open)
 
 # test extract_yaml_details
 
