@@ -42,7 +42,7 @@ _MatchOptions = Dict[
 _MatchParts = Dict[str, List[Tuple[str, Dict[str, str]]]]
 _OutsideOptions = Optional[Dict[str, _ErrorDictionary]]
 _TokenPattern = Optional[Dict[str, str]]
-_NextOptions = Optional[Union[Tuple[str, ...]]]
+_NextOptions = Optional[Union[Tuple[str, ...], Tuple[None]]]
 _TokenProcessingOptions = Dict[
     str, Union[Tuple[Tuple[Union[_RegexPattern, str], str], ...], Tuple[str, ...], str]
 ]
@@ -636,7 +636,8 @@ def convert_syntax(
     extracted_yaml_details: _ParseYAMLDetails,
     original_content: str,
     is_recursive: bool = False,
-    conversion_parts: Union[Tuple[str, ...]] = (),
+    conversion_parts: Tuple[str, ...] = ()
+
 ) -> str:
     """
     This function converts new syntax to original syntax as described in extracted_yaml_details.
