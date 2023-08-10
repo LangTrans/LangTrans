@@ -3,6 +3,8 @@ import re
 import os
 from re import error as re_error
 from re import compile as re_compile
+from unittest.mock import patch
+
 from LangTrans.LangTrans import sanitize_regex
 from LangTrans.LangTrans import check_collections
 from LangTrans.LangTrans import extract_token_options
@@ -184,10 +186,18 @@ def mock_open(file, *args, **kwargs):
 def mock_builtin_open(monkeypatch):
     monkeypatch.setattr("builtins.open", mock_open)
 
+
+
 # test extract_yaml_details
+
+
 
 # test load_variables
 
+
+
 # test load_compiled_yaml_details
+
+
 
 # test print_yaml_documentation
