@@ -112,7 +112,32 @@ def test_replace_variables_empty(global_variables):
     assert result == expected_result
 
 
+class TestReplaceVariables:
+    global_vars = {
+        "var1": "value1",
+        "var2": "value2",
+        "longer_variable": "longer_value"
+    }
 
+    def test_single_variable_replace(self):
+        source_string = "This is a test with <var1>."
+        expected_result = "This is a test with value1."
+        assert replace_variables(self.global_vars, source_string) == expected_result
+
+    def test_multiple_variable_replace(self):
+        source_string = "Replace <var1> and <var2>."
+        expected_result = "Replace value1 and value2."
+        assert replace_variables(self.global_vars, source_string) == expected_result
+
+    def test_longer_variable_name(self):
+        source_string = "Replace <longer_variable> first and then <var1>."
+        expected_result = "Replace longer_value first and then value1."
+        assert replace_variables(self.global_vars, source_string) == expected_result
+
+    def test_no_variable_to_replace(self):
+        source_string = "No variables here."
+        expected_result = "No variables here."
+        assert replace_variables(self.global_vars, source_string) == expected_result
 # test compile_error_regexes
 
 
