@@ -159,7 +159,12 @@ class TestReplaceVariables:
 
 
 # test find_outside_errors
-
+class TestCodeChecker:
+    @staticmethod
+    def test_no_errors():
+        outside_options = {}
+        source_code = "valid source code without errors"
+        find_outside_errors(outside_options, source_code)
 
 
 # test convert_syntax
@@ -183,7 +188,32 @@ def example_yaml_details():
 
 
 # test find_substring_lines
+def test_find_substring_lines_multi_line_match():
+    code_lines = [
+        "def find_substring_lines(",
+        "    code_lines: List[str], target_string: str",
+        ") -> _TargetStringLines:",
+        "    target_lines = target_string.splitlines()",
+        "    target_length = len(target_lines)",
+        "    possible_start_indices = len(code_lines) - target_length + 1",
+    ]
+    target_string = "target_length = len(target_lines)"
 
+    result = find_substring_lines(code_lines, target_string)
+
+    assert result == (4, 1, [code_lines[4]])
+
+def test_find_substring_lines_no_match():
+    code_lines = [
+        "def find_substring_lines(",
+        "    code_lines: List[str], target_string: str",
+        ") -> _TargetStringLines:",
+    ]
+    target_string = "target_length = len(target_lines)"
+
+    result = find_substring_lines(code_lines, target_string)
+
+    assert result is None
 
 
 # test load_yaml_file

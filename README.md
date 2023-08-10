@@ -29,7 +29,7 @@ After cloning, navigate into the LangTrans directory.
 
 Once repo is cloned to computer, run this command to install dependencies:
 
-    pip install requirements.txt
+    pip install -r requirements.txt
 
 ### **Download executable**
 
