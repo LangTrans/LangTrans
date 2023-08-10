@@ -27,6 +27,10 @@ git clone https://github.com/LangTrans/LangTrans.git
 
 After cloning, navigate into the LangTrans directory.
 
+Once repo is cloned to computer, run this command to install dependencies:
+
+    pip install requirements.txt
+
 ### **Download executable**
 
 Go to [Releases](https://github.com/LangTrans/LangTrans/releases) and download the [latest executable]((https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe)) or a [installer](https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe).
@@ -115,6 +119,12 @@ printhis("Customized!")
 * [Languages by community](https://langtrans.github.io/langtransrepos/)
 
 You can share your language [here](https://forms.gle/YDEKapaTZmJspyDeA).
+
+## Testing
+
+From the root run:
+
+    pytest tests/test_LangTrans.py
 
 ## Contributing
 
