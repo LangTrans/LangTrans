@@ -13,6 +13,7 @@ See LICENSE file for orginal text.
 from os import system
 from os.path import dirname
 import os
+import re
 from sys import argv, exit as sys_exit
 from functools import partial
 from typing import Any, Match, Pattern, Dict, Union, Optional, List, Tuple
@@ -85,8 +86,8 @@ def sanitize_regex(regex: str) -> _RegexPattern:
     regex = regex.replace(" ", r"\s+").replace("~", r"\s*")
 
     try:
-        return re_compile(regex, 8)  # re.MULTILINE=8
-    except re_error as error:
+        return re.compile(regex, 8)  # re.MULTILINE=8
+    except re.error as error:
         print(error_msg, "Invalid regex")
         print(error.msg)
         print("Regex:", regex.replace("\n", r"\n").replace("\t", r"\t"))
@@ -163,7 +164,7 @@ def extract_token_options(
     default values, translation options, and next call list.
     """
 
-    translation_options: _TokenOptions = {}
+    conversion_options: _TokenOptions = {}
     unmatched_patterns: _UnmatchedPatterns = {}
     defaults: Dict[str, str] = {}
     tokens: list = definition.get("tokens", [])
@@ -185,7 +186,7 @@ def extract_token_options(
                                 for reprgx in value
                             ]
                         )
-                    except re_error as error:
+                    except re.error as error:
                         print(f"Location: Replace option for token({token_name})")
                         raise error
                 elif option == "call":
@@ -200,7 +201,7 @@ def extract_token_options(
                                 for rgx in value
                             ]
                         )
-                    except re_error as error:
+                    except re.error as error:
                         print(f"Location: Unmatch for token({token_name})")
                         raise error
                 elif option == "default":
@@ -209,13 +210,13 @@ def extract_token_options(
                 for token in token_name.split(","):
                     if token not in tokens:
                         return print(f"Error: {token} not found in tokens")  # TypeError
-                    translation_options[token] = processing_options
+                    conversion_options[token] = processing_options
                 continue
             if token_name not in tokens:
                 return print(
                     f"{error_msg} {token_name} not found in tokens"
                 )  # TypeError
-            translation_options[token_name] = processing_options
+            conversion_options[token_name] = processing_options
 
     # Next Options
     next_value = definition.get("next", None)
@@ -227,7 +228,7 @@ def extract_token_options(
         unmatched_patterns,
         defaults,
         (
-            translation_options,
+            conversion_options,
             next_collections,
         ),
     )
@@ -404,10 +405,12 @@ def extract(
             )
             trans_options[part] = tknopns
 
-    except (re_error, TypeError):  # Regex and unknown token option error
-        sys_exit(f"Part:{part}")
+    except (re.error, TypeError):  # Regex and unknown token option error
+        print(f"Part:{part}")
+        sys_exit()
     except KeyError as key_error:  # For part without regex or tokens
-        sys_exit(f"{error_msg} {key_error} not found in {part}")
+        print()
+        sys_exit()
     return after, (match_options, trans_options, (outside if errfile else None))
 
 
@@ -557,7 +560,7 @@ def match_parts(
                     regex = (
                         error["regex"]
                         if isinstance(error["regex"], Pattern)
-                        else re_error(error["regex"])
+                        else re.error(error["regex"])
                     )
                     if isinstance(regex, (str, Pattern)):
                         err_match = re_search(regex, match_string)
@@ -688,10 +691,10 @@ def convert_syntax(
         iteration_count += 1
 
         for part, matches in matched_parts.items():
-            if pattern_templates is not None:
-                pattern = pattern_templates[part]
+            pattern = pattern_templates[part] if pattern_templates is not None else None
             token_options, next_options = transform_rules[part]
             for part_match, token_match in matches:
+                assert(pattern is not None)
                 temp_pattern = pattern
                 for token_name, match in token_match.items():
                     if token_name not in token_options:
@@ -756,20 +759,24 @@ def find_substring_lines(
     :rtype: Optional[Tuple[int, int, List[str]]]
     """
 
-    target_lines = target_string.splitlines()
-    target_length = len(target_lines)
-    possible_start_indices = len(code_lines) - target_length + 1
+    if not code_lines or not target_string:
+        return None
 
-    for target_index in range(possible_start_indices):
-        if target_lines[0] in code_lines[target_index]:  # If first target_line matched
-            matched_lines = code_lines[
-                target_index : target_index + target_length
-            ]  # rest of target_line
-            if all(
-                subline in line_part
-                for subline, line_part in zip(target_lines[1:], matched_lines)
-            ):
-                return target_index, target_length, matched_lines
+    target_lines_list = target_string.splitlines()
+    target_line_count = len(target_lines_list)
+    max_index = len(code_lines) - target_line_count + 1
+
+    for target_index in range(max_index):
+        if target_lines_list[0] in code_lines[target_index]:
+            matched = True
+            for subline, line_part in zip(target_lines_list[1:], code_lines[target_index + 1 : target_index + target_line_count]):
+                if subline not in line_part:
+                    matched = False
+                    break
+            if matched:
+                matched_lines = code_lines[target_index : target_index + target_line_count]
+                return target_index, target_line_count, matched_lines
+
     return None
 
 
@@ -939,6 +946,7 @@ def print_yaml_documentation(source_file: str) -> None:
         print(f"{tokens_str:<{longest_tokens_length}}")
         print(f"{about_with_indentation}")
 
+var_rgx = re.compile(r"<\w+>")
 
 if __name__ == "__main__":
     if len(argv) == 1 or (len(argv) == 2 and argv[1] == "-h"):
@@ -964,10 +972,6 @@ if __name__ == "__main__":
         # ------------------------------------------------------------
         if "-c" in argv:  # Compile into ltz
             from pickle import dump, HIGHEST_PROTOCOL
-            from re import error as re_error
-            from re import compile as re_compile
-
-            var_rgx = re_compile(r"<\w+>")
             argv[-1] += ".ltz"
             with open(argv[-1], "wb") as litz_file:
                 dump(
@@ -984,10 +988,6 @@ if __name__ == "__main__":
             print_yaml_documentation(argv[-1])
             sys_exit()
         else:
-            from re import error as re_error
-            from re import compile as re_compile
-
-            var_rgx = re_compile(r"<\w+>")
             YAML_DETAILS = extract_yaml_details(argv[3], argv[4])
         # -------------------------------------------------------------------
         AFTER_COMMAND, YAML_DETAILS = YAML_DETAILS
