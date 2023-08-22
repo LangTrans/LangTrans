@@ -21,3 +21,28 @@ number: (\d+(?:\.\d+)?) # Match numbers
 string: ("(?:[^"\\]|\\.)*") # Match double-quoted strings
 
 comment: (#[^\n]*) # Match single-line comments
+
+Email-Address: '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b' #Email- Address
+
+URLs: '\bhttps?://\S+\b' #URLs
+
+Dates(MM/DD/YYYY): '\b\d{1,2}/\d{1,2}/\d{4}\b' #Dates(MM/DD/YYYY)
+
+IP Addresses: '\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b' #IP Addresses
+
+File Paths: '\b(?:\/[\w-]+)+\/?' #File Paths
+
+credit-card numbers: '\b\d{4}-\d{4}-\d{4}-\d{4}\b' #credit-card numbers
+
+Hashes (MD5, SHA-1, SHA-256): '\b[a-f0-9]{32}\b' #Hashes (MD5, SHA-1, SHA-256)
+Hashes (MD5, SHA-1, SHA-256): '\b[a-f0-9]{40}\b'
+Hashes (MD5, SHA-1, SHA-256): '\b[a-f0-9]{64}\b'
+
+Code Comments (C-style)- begin: '\/\*' #Code Comments (C-style)
+  end: '\*\/'
+- match: '//.*$'
+
+HTML Tags: '<\w+\b' #HTML Tags
+- match: '>\b'
+
+code-function names: '\b\w+\s*(?=\()' #code-function names
