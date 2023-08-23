@@ -11,7 +11,9 @@
 [![License](https://img.shields.io/github/license/B-R-P/langtrans?style=flat-square&logo=open-source-initiative)](https://raw.githubusercontent.com/B-R-P/LangTrans/main/LICENSE)
 [![myPy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
-LangTrans is a syntactic preprocessor that allows you to customize the syntax of any programming language. It operates by translating your custom syntax into the original language syntax, enabling you to write code in a manner that suits your style, while still conforming to the programming language's specifications. It employs regular expressions to extract tokens from your custom language and uses these tokens to generate a representation of the original language syntax.
+LangTrans is a syntactic preprocessor that lets you customize any programming language's syntax.<br>
+It translates your custom syntax into the original language, allowing personalized coding while adhering to language specifications.<br>
+Using regular expressions, it extracts tokens from your custom language to generate the original syntax.
 
 ## Quick Start
 
