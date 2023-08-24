@@ -21,3 +21,23 @@ number: (\d+(?:\.\d+)?) # Match numbers
 string: ("(?:[^"\\]|\\.)*") # Match double-quoted strings
 
 comment: (#[^\n]*) # Match single-line comments
+
+email: \b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b #This expression can be used to validate email addresses.
+
+url: \bhttps?://\S+\b #This expression helps in identifying and validating URLs within text.
+
+ip: \b(?:\d{1,3}\.){3}\d{1,3}\b #This regular expression can be used to identify and extract IP addresses.
+
+date: \b\d{2}\/\d{2}\/\d{4}\b #This expression matches dates in the format of MM/DD/YYYY.
+
+filepath: \b\/(?:[\w-]+\/)*[\w-]+\.\w+\b #This expression can be used to match and extract file paths in a Unix-like format.
+
+ssn: \b\d{3}-\d{2}-\d{4}\b #This expression matches Social Security Numbers in the format of XXX-XX-XXXX.
+
+domain: \b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b #This regular expression can be used to match and extract domain names from text.
+
+hashtag: \#\w+  #This expression can help identify and extract hashtags from text.
+
+emoticon: \b[:;=]-?[)D]|[({\[]-[;:]\b #This expression can help identify and extract emoticons from text.
+
+htmlattr: \b[a-zA-Z][a-zA-Z0-9-]*="[^"]*"\b #This expression can be used to match and extract HTML tag attributes with their corresponding values.
