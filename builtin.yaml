@@ -22,32 +22,16 @@ string: ("(?:[^"\\]|\\.)*") # Match double-quoted strings
 
 comment: (#[^\n]*) # Match single-line comments
 
-Email Address:
-Pattern: [A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,7}
+integer: '-?\\d+' # Match integers
 
-URLs:
-Pattern: https?:\/\/\S+
+float: -?\\d+\\.\\d+ # Match floating-point numbers
 
-Dates (MM/DD/YYYY):
-Pattern: \d{1,2}\/\d{1,2}\/\d{4}
+boolean: true|false # Match boolean values
 
-IP Addresses:
-Pattern: \b(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b
+null: null # Match null value
 
-File Paths:
-Pattern: (?:\/[\w-]+)+\/?
+key: \\w+: # Match keys in key-value pairs
 
-Hashes (MD5, SHA-1, SHA-256):
-Pattern: \b[a-f0-9]{32}\b
-Pattern: \b[a-f0-9]{40}\b
-Pattern: \b[a-f0-9]{64}\b
+list: \\[(?:[^\\[\\]]*|(?R))*\\] # Match lists (assuming they're defined on a single line)
 
-Code Comments (C-style):
-Pattern for multiline comments: \/\*[\s\S]*?\*\/
-Pattern for single-line comments: \/\/.*$
-
-HTML Tags:
-Pattern: <\w+\b
-
-Code Function Names:
-Pattern: \b\w+\s*(?=\()
+dict: {(?:[^{}]*|(?R))*} # Match dictionaries/objects (assuming they're defined on a single line)
