@@ -27,7 +27,3 @@ expressions:
   null: "null" # Match null value
   
   key: "\\w+:" # Match keys in key-value pairs
-  
-  list: "\\[(?:[^\\[\\]]*|(?R))*\\]" # Match lists (assuming they're defined on a single line)
-  
-  dict: "{(?:[^{}]*|(?R))*}" # Match dictionaries/objects (assuming they're defined on a single line)
