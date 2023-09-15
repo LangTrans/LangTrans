@@ -22,6 +22,6 @@ string: ("(?:[^"\\]|\\.)*") # Match double-quoted strings
 
 comment: (#[^\n]*) # Match single-line comments
 
-multi-line comment: ('''(.*?)'''|"""(.*?)""") # Match multi-line comments
+mlcomment: ('''(.*?)'''|"""(.*?)""") # Match multi-line comments
 
 name: ([a-zA-Z_][a-zA-Z0-9_]*) # Match variable/function/class names
