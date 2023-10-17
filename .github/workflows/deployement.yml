@@ -2,11 +2,11 @@ name: Deployment
 
 on:
   push:
-    branches: [build_CICD_pipeline]
+    branches: [main]
 
 jobs:
   build_and_test:
-    name: DDK ki pipeline
+    name: test_and_build
     runs-on: ubuntu-latest
 
     steps:
@@ -32,3 +32,8 @@ jobs:
       - name: Build
         run: |
           poetry build
+
+#      - name: Publish to PyPI
+#        env:
+#          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+#        run: poetry publish
