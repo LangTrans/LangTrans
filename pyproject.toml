@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "langtrans"
+version = "0.1.0"
+description = ""
+authors = ["Dhruvi Gangawal <dhruvigangawal@gmail.com>"]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+colorama = "^0.4.6"
+types-colorama = "^0.4.15.12"
+pyyaml = "^6.0.1"
+types-pyyaml = "^6.0.12.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
