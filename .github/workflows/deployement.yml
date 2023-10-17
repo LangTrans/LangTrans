@@ -27,7 +27,7 @@ jobs:
 
       - name: Test Run
         run: |
-          poetry run python FunctionTest.py
+          poetry run python test/FunctionTest.py
 
       - name: Build
         run: |
