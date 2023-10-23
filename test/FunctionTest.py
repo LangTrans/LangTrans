@@ -1,5 +1,5 @@
 import unittest
-import LangTrans
+from src import LangTrans
 import re
 import contextlib
 import io
@@ -17,21 +17,21 @@ def capture_print_output():
 class TransTest(unittest.TestCase):
 	invalid_regex = r"[a-z"
 	# '\x1b[31m' means red color in terminal (ANSI escape code)
-	regex_err_msg = '\x1b[31mError: Invalid regex\nunterminated character set\nRegex: [a-z\n       ^\n' 
-	
+	regex_err_msg = '\x1b[31mError: Invalid regex\nunterminated character set\nRegex: [a-z\n       ^\n'
+
 	def test_sanitize_regex(self):
 		# Chcking Compiled Pattern
 		result = LangTrans.sanitize_regex(r"\((\s*\w+\s*(?:,\s*\w+\s*)*)\)\s*=>\s*{(\n(?:(?:(?:\t|\s)+)+?).*(?:(?:\n\\3.*)*\n*)*)}")
 		self.assertFalse(" " in result.pattern or "~" in result.pattern)
-		
+
 		# Checking error msg
 		with self.assertRaises(re.error):
 			with capture_print_output() as output:
 				LangTrans.sanitize_regex(self.invalid_regex)
 		self.assertEqual(output.getvalue(),self.regex_err_msg)
-		
+
 		# Checking multiline support
-		# TODO: Change this string into a custom syntax code 
+		# TODO: Change this string into a custom syntax code
 		multiline_string = """\nstart of line\nsome content here\nend of line\n"""
 		rgx = LangTrans.sanitize_regex(r"""^start(.|\n)+end""")
 		match = rgx.search(multiline_string)
@@ -111,20 +111,20 @@ class TransTest(unittest.TestCase):
 					'call': ('collection1',),
 		            'eachline': 'line_option',
 		            'replace': (
-		            	(LangTrans.sanitize_regex('pattern1'),'replacement1'),
+		            	(LangTrans.sanitize_regex('pattern1'), 'replacement1'),
 		            )
 		          },
 		 'token2': {
 		 			'call': ('collection2',),
 		            'eachline': 'line_option',
 		            'replace': (
-		            	(LangTrans.sanitize_regex('pattern2'),'replacement2'),
+		            	(LangTrans.sanitize_regex('pattern2'), 'replacement2'),
 		            )
 		           }
 		}
 		expected_next_collections = ('collection3',)
 
-		self.assertEqual(result[0],{'token1': (LangTrans.sanitize_regex('unmatch_pattern'),)})
+		self.assertEqual(result[0], {'token1': (LangTrans.sanitize_regex('unmatch_pattern'),)})
 		self.assertEqual(result[1],{"token1": "default_value"})
 		self.assertEqual(result[2],(expected_conversion_options, expected_next_collections))
 		# Missing collection
@@ -166,12 +166,12 @@ class TransTest(unittest.TestCase):
 
 		expected_match_options = {
 		'pattern1': (LangTrans.sanitize_regex(r'(\d+)'),
-              ('number',),
-              True,
-              ({}, ()),
-              {},
-              False,
-              None)
+                     ('number',),
+                     True,
+                     ({}, ()),
+                     {},
+                     False,
+                     None)
 		}
 
 		expected_trans_options = {'pattern1': ({}, None)}
@@ -199,13 +199,13 @@ class TransTest(unittest.TestCase):
 		source_content = "123 456 789"
 		match_options = {
 		    "pattern1": (
-		        LangTrans.sanitize_regex(r"(\d+)"),
-		        ("number",),
-		        True,
-		        ({}, ()),
-		        {},
-		        False,
-		        None,
+                LangTrans.sanitize_regex(r"(\d+)"),
+                ("number",),
+                True,
+                ({}, ()),
+                {},
+                False,
+                None,
 		    )
 		}
 		is_recursion = False
@@ -222,13 +222,13 @@ class TransTest(unittest.TestCase):
 		source_content = "123 456 789"
 		match_options = {
 		    "pattern1": (
-		        LangTrans.sanitize_regex(r"(\d+)"),
-		        ("number",),
-		        True,
-		        ({}, (LangTrans.sanitize_regex(r"\b456\b"),)),
-		        {},
-		        False,
-		        None,
+                LangTrans.sanitize_regex(r"(\d+)"),
+                ("number",),
+                True,
+                ({}, (LangTrans.sanitize_regex(r"\b456\b"),)),
+                {},
+                False,
+                None,
 		    )
 		}
 		is_recursion = False
@@ -245,13 +245,13 @@ class TransTest(unittest.TestCase):
 		    (
 		        {
 		            "part1": (
-		                LangTrans.sanitize_regex(r"(123)"),
-		                ("num",),
-		                True,
-		                ({}, ()),
-		                {},
-		                False,
-		                None,
+                        LangTrans.sanitize_regex(r"(123)"),
+                        ("num",),
+                        True,
+                        ({}, ()),
+                        {},
+                        False,
+                        None,
 		            )
 		        },
 		        {

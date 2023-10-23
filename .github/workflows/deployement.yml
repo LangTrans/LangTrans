@@ -1,0 +1,39 @@
+name: Deployment
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build_and_test:
+    name: test_and_build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Github Action Setup
+        uses: actions/checkout@v3
+
+      - name: Python Setup
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies with poetry
+        run: |
+          poetry install --only main
+
+      - name: Test Run
+        run: |
+          poetry run python test/FunctionTest.py
+
+      - name: Build
+        run: |
+          poetry build
+
+#      - name: Publish to PyPI
+#        env:
+#          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+#        run: poetry publish
