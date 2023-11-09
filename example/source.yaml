@@ -28,6 +28,11 @@ print:
   tokens: [tab,str]
   doc: Print string (p"")
 
+return:
+  regex: <tab>r(".*")$
+  tokens: [tab,str]
+  doc: Return string (r"")
+
 arrow_multline:
   regex: <args>\s*=>\s*{<i1>3<i2>}
   tokens: [args,statement]

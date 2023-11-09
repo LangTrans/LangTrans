@@ -5,6 +5,7 @@ fun_operation: <funs>
 arrow2list: map(<fun>,<list>)
 arrow_multline: lambda <args>:exec("""<statement>""")
 print: <tab>print(<str>)
+return: <tab>return(<str>)
 fun: def <name>
 single_try: |-
   <tab>try:
