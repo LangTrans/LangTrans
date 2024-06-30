@@ -19,7 +19,7 @@ Using regular expressions, it extracts tokens from your custom language to gener
 
 There are two ways you can install LangTrans:
 
-### **Clone repository**
+### **Clone Repository**
 
 Use the following command to clone the repository:
 
@@ -29,9 +29,9 @@ git clone https://github.com/LangTrans/LangTrans.git
 
 After cloning, navigate into the LangTrans directory.
 
-### **Download executable**
+### **Download Executable**
 
-Go to [Releases](https://github.com/LangTrans/LangTrans/releases) and download the [latest executable]((https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe)) or a [installer](https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe).
+Go to [Releases](https://github.com/LangTrans/LangTrans/releases) and download the [latest executable]((https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe)) or an [installer](https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe).
 
 ## Usage
 
@@ -141,3 +141,7 @@ If you need support with LangTrans, there are several ways we can assist you:
 1. **Documentation**: You can find a wealth of information about how to use LangTrans, including detailed guides and examples, in our [Gitbook documentation](https://bijinregipanicker.gitbook.io/langtrans/).
 
 1. **Community**: You can join our [Discord community](https://discord.gg/3nDwppur5S), where you can ask questions, share your ideas, and get help from other LangTrans users.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/LangTrans/LangTrans/blob/main/LICENSE) file for details.
