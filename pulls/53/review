@@ -1,0 +1,19 @@
+1) README.md — img alt: Alt text appears truncated in the diff ("..."). Please ensure the full descriptive alt text is present (not truncated).
+
+2) README.md — wording: Replace "LangTrans is a syntactic preprocessor that lets you customize any programming language's syntax." with "LangTrans is a syntactic preprocessor that lets you customize the syntax of any programming language."
+
+3) README.md — regex sentence: Change "Using regular expressions, it extracts tokens from your custom language and generates the corresponding syntax." to "Using regular expressions, it extracts tokens from your custom language and generates the original language syntax."
+
+4) README.md — command fix: Good fix for "SoureFileName" → "SourceFileName". Also suggest formatting the example as code: `py langtrans.py <SourceFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>`.
+
+5) README.md — parameter bullets: Standardize bullets and format parameter names as inline code (e.g., `SourceFileName`, `OutputFileName`, `SyntaxRepr`, `PatternRepr`). Use consistent marker (prefer `-`).
+
+6) README.md — flag `-n`: Make flag description imperative and consistent: "`-n`: Skip executing the `after` command."
+
+7) README.md — JavaScript capitalization: Change "javascript" to "JavaScript".
+
+8) README.md — Languages list: List formatting looks good; ensure consistent list style and naming (e.g., "Community-Contributed Languages").
+
+9) README.md — badges / links: Verify license badge URL owner/repo and the GitBook link (bijinregipanicker) are the intended canonical links.
+
+10) README.md — author attribution: Confirm adding "**Author:** [Hasan-8326]" is intended and accurate for this repository.
