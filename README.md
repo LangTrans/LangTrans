@@ -1,7 +1,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/_LangTrans_dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="./assets/_LangTrans_light.svg">
-  <img alt="Shows an illustrated sun in light mode and a moon with stars in dark mode." src="./assets/_LangTrans_light.svg">
+  <img alt="LangTrans logo showing an illustrated sun in light mode and a moon with stars in dark mode." ...
 </picture>
 
 <br />
@@ -11,9 +11,10 @@
 [![License](https://img.shields.io/github/license/B-R-P/langtrans?style=flat-square&logo=open-source-initiative)](https://raw.githubusercontent.com/B-R-P/LangTrans/main/LICENSE)
 [![myPy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
-LangTrans is a syntactic preprocessor that lets you customize any programming language's syntax.<br>
-It translates your custom syntax into the original language, allowing personalized coding while adhering to language specifications.<br>
-Using regular expressions, it extracts tokens from your custom language to generate the original syntax.
+LangTrans is a syntactic preprocessor that lets you customize the syntax of any programming language.<br>
+It translates your custom syntax into the original language, allowing personalized coding while adhering to language specifications.<br>  
+Using regular expressions, it extracts tokens from your custom language and generates the corresponding syntax.
+
 
 ## Quick Start
 
@@ -38,13 +39,14 @@ Go to [Releases](https://github.com/LangTrans/LangTrans/releases) and download t
 You can use LangTrans from the command line using the following structure:
 
 ```bash
-py langtrans.py <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>
+py langtrans.py <SourceFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>
 ```
 
-* **SoureFileName**: Name of the source code file written with your new syntax
-* **OutputFileName**: Name of the source code file you want to generate with the original syntax
-* **SyntaxRepr**: Name of the YAML file for your syntax representation (without .yaml extension)
-* **PatternRepr**: Name of the YAML file for the pattern representation of the original language (without .yaml extension)
+- **SourceFileName** — name of the source code file written in your custom syntax  
+- **OutputFileName** — name of the generated file in the original syntax  
+- **SyntaxRepr** — YAML file defining your custom syntax (without the `.yaml` extension)  
+- **PatternRepr** — YAML file defining the pattern representation of the original language (without the `.yaml` extension)
+
 
 ### Flags
 
@@ -53,14 +55,14 @@ You can also use the following options with the langtrans.py command:
 * `-h`: Displays help information
 * `-v`: Activates verbose mode
 * `-y`: Executes the 'after' command automatically
-* `-n`: Exits without executing the 'after' command
+* `-n`: Skip execution of the “after” command
 
 ## Examples
 
 Here is our take on custom [Python](https://github.com/LangTrans/Python_Trans):
 
 ```py
-#Print
+# Print
 p"Hello World"
 
 # Anonymous function
@@ -85,7 +87,7 @@ print('x is not defined') if !x
 # Arithmetic operations with functions
 print((inc+twice)(3))
 
-#Scope syntax work like in javascript
+#Scope syntax works like in javascript
 #scope1#
 print("Scope1")
 print("Done")
@@ -110,11 +112,12 @@ printhis("Customized!")
 
 ## Languages
 
-* [Python](https://github.com/LangTrans/Python_Trans)
-* [C](https://github.com/LangTrans/C_Trans)
-* [Common Lisp](https://github.com/LangTrans/LISP_Trans)
-* [Lua](https://github.com/LangTrans/Lua_Trans)
-* [Languages by community](https://langtrans.github.io/langtransrepos/)
+- [Python](https://github.com/LangTrans/Python_Trans)
+- [C](https://github.com/LangTrans/C_Trans)
+- [Common Lisp](https://github.com/LangTrans/LISP_Trans)
+- [Lua](https://github.com/LangTrans/Lua_Trans)
+- [Community-Contributed Languages](https://langtrans.github.io/langtransrepos/)
+
 
 You can share your language [here](https://forms.gle/YDEKapaTZmJspyDeA).
 
@@ -141,3 +144,7 @@ If you need support with LangTrans, there are several ways we can assist you:
 1. **Documentation**: You can find a wealth of information about how to use LangTrans, including detailed guides and examples, in our [Gitbook documentation](https://bijinregipanicker.gitbook.io/langtrans/).
 
 1. **Community**: You can join our [Discord community](https://discord.gg/3nDwppur5S), where you can ask questions, share your ideas, and get help from other LangTrans users.
+---
+
+**Author:** [Hasan-8326](https://github.com/Hasan-8326)  
+**Project:** [LangTrans](https://github.com/LangTrans/LangTrans)
