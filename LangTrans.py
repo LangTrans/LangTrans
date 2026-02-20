@@ -282,7 +282,7 @@ def compile_error_regexes(
 			result[error_name] = compile_error_regexes(error, global_variables)
 		else:
 			result[error_name] = error.copy()
-			result[error_name]["regex"]["pattern"] = sanitize_regex(
+			result[error_name]["regex"] = sanitize_regex(
 				replace_variables(global_variables, error["regex"])
 			)
 
@@ -314,6 +314,7 @@ def compile_error_regex_in_file(
 		compiled_errors = compile_error_regexes(errors, global_variables)
 		if "outside" in compiled_errors:
 			outside_errors[error_part] = compiled_errors.pop("outside")
+		error_definitions[error_part] = compiled_errors
 
 	if "outside" in error_definitions:  # Outside errors not related to any part
 		outside_errors[""] = error_definitions.pop("outside")
@@ -554,16 +555,11 @@ def match_parts(
 				for token_match_name, match_variable in zip(token_names, match.groups())
 			}
 			if err:  # If error definition exists
-				from re import search as re_search
-
 				for name, error in err.items():  # Static Code Analysis
-					regex = (
-						error["regex"]
-						if isinstance(error["regex"], Pattern)
-						else re.error(error["regex"])
-					)
-					if isinstance(regex, (str, Pattern)):
-						err_match = re_search(regex, match_string)
+					regex = error.get("regex")
+					if not isinstance(regex, Pattern):
+						continue
+					err_match = regex.search(match_string)
 
 					error_message = error["msg"]
 					if error_message is None or not isinstance(error_message, str):
@@ -669,6 +665,8 @@ def convert_syntax(
 		outside_errors,
 	), pattern_templates = extracted_yaml_details
 	iteration_count = 0
+	if not is_recursive:
+		once_complete.clear()
 
 	if is_recursive:
 		match_rules = {part: match_rules[part] for part in conversion_parts}

@@ -4,6 +4,8 @@ import re
 import contextlib
 import io
 import sys
+import tempfile
+import os
 
 @contextlib.contextmanager
 def capture_print_output():
@@ -275,7 +277,48 @@ class TransTest(unittest.TestCase):
 		expected_result = "323"
 		self.assertEqual(result,expected_result)
 
+		# Ensure once-complete state does not leak between top-level conversions
+		once_yaml_details = (
+		    (
+		        {
+		            "part_once": (
+		                LangTrans.sanitize_regex(r"(x)"),
+		                ("x",),
+		                True,
+		                ({}, ()),
+		                {},
+		                True,
+		                None,
+		            )
+		        },
+		        {"part_once": ({"x": {}}, ())},
+		        None,
+		    ),
+		    {"part_once": "y"},
+		)
+		self.assertEqual(LangTrans.convert_syntax(once_yaml_details, "x"), "y")
+		self.assertEqual(LangTrans.convert_syntax(once_yaml_details, "x"), "y")
+
 		#TODO: Test for condition `is_recursive=True`
+
+	def test_compile_error_regex_in_file(self):
+		with tempfile.TemporaryDirectory() as temp_dir:
+			error_file = os.path.join(temp_dir, "errors.yaml")
+			with open(error_file, "w", encoding="utf-8") as f:
+				f.write(
+					"part1:\n"
+					"  invalid_token:\n"
+					"    regex: '(foo)'\n"
+					"    msg: 'bad token'\n"
+				)
+
+			error_definitions, outside = LangTrans.compile_error_regex_in_file(
+				error_file[:-5], {}
+			)
+			self.assertEqual(outside, {})
+			self.assertIsInstance(
+				error_definitions["part1"]["invalid_token"]["regex"], re.Pattern
+			)
 	def test_find_substring_lines(self):
 		code_lines = [
 		    "This is a test.",
