@@ -16,7 +16,7 @@ import os
 import re
 from sys import argv, exit as sys_exit
 from functools import partial
-from typing import Any, Match, Pattern, Dict, Union, Optional, List, Tuple
+from typing import Any, Match, Pattern, Dict, Union, Optional, List, Tuple, cast
 from colorama import init, Fore
 
 
@@ -262,7 +262,7 @@ def replace_variables(
 
 def compile_error_regexes(
 	error_definitions: _ArbitraryDict, global_variables: _VariablesDict
-) -> _ArbitraryDict:
+) -> _ErrorDictionary:
 	"""
 	Compiles regex patterns for each error in the errors dictionary.
 
@@ -275,16 +275,20 @@ def compile_error_regexes(
 	:return: The `errors` dictionary with compiled regex patterns.
 	:rtype: _ArbitraryDict
 	"""
-	result = {}
+	result: _ErrorDictionary = {}
 
 	for error_name, error in error_definitions.items():
 		if error_name == "outside":
-			result[error_name] = compile_error_regexes(error, global_variables)
-		else:
-			result[error_name] = error.copy()
-			result[error_name]["regex"] = sanitize_regex(
-				replace_variables(global_variables, error["regex"])
+			result[error_name] = cast(
+				_ErrorDetails,
+				compile_error_regexes(error, global_variables),
 			)
+		else:
+			error_details = cast(_ErrorDetails, error.copy())
+			error_details["regex"] = sanitize_regex(
+				replace_variables(global_variables, str(error["regex"]))
+			)
+			result[error_name] = error_details
 
 	return result
 
@@ -319,7 +323,7 @@ def compile_error_regex_in_file(
 	if "outside" in error_definitions:  # Outside errors not related to any part
 		outside_errors[""] = error_definitions.pop("outside")
 
-	return error_definitions, outside_errors
+	return cast(Dict[str, _ErrorDictionary], error_definitions), cast(_OutsideOptions, outside_errors)
 
 
 def extract(
@@ -710,10 +714,14 @@ def convert_syntax(
 							) in replacements_tuple:  # pattern-match and replace
 								match = sub(rgx, replacement, match)
 						elif option == "call":
-							calls = opts["call"]
-							match = re_convert(
-								original_content=match, conversion_parts=calls
-							)
+								calls = opts["call"]
+								if isinstance(calls, tuple) and all(
+									isinstance(part_name, str) for part_name in calls
+								):
+									calls_tuple = cast(Tuple[str, ...], calls)
+									match = re_convert(
+										original_content=match, conversion_parts=calls_tuple
+									)
 						elif option == "eachline":  # For eachline option
 							line = opts["eachline"]
 							line_string = str(line)
@@ -954,7 +962,7 @@ if __name__ == "__main__":
 		sys_exit(error_msg + " Insufficient number of arguments")
 
 	try:
-		YAML_DETAILS = None
+		yaml_bundle: Optional[Tuple[_AfterProcessing, _ParseYAMLDetails]] = None
 
 		# Terminal Options-------------------------------------------
 		YES = "-y" in argv  # To run after command automatically
@@ -981,20 +989,22 @@ if __name__ == "__main__":
 			sys_exit("File saved as " + argv[-1])
 		elif "-f" in argv:  # Run compiled ltz
 			argv.remove("-f")
-			YAML_DETAILS = load_compiled_yaml_details(argv[-1])
+			yaml_bundle = load_compiled_yaml_details(argv[-1])
 		elif "-d" in argv:
 			print_yaml_documentation(argv[-1])
 			sys_exit()
 		else:
-			YAML_DETAILS = extract_yaml_details(argv[3], argv[4])
+			yaml_bundle = extract_yaml_details(argv[3], argv[4])
 		# -------------------------------------------------------------------
-		AFTER_COMMAND, YAML_DETAILS = YAML_DETAILS # type: ignore[assignment]
+		if yaml_bundle is None:
+			sys_exit(error_msg + " YAML details not loaded")
+		AFTER_COMMAND, yaml_details = yaml_bundle
 		with open(argv[1], encoding="utf-8") as InputFile:
 			content = InputFile.read()
 		re_convert = partial(
-			convert_syntax, extracted_yaml_details=YAML_DETAILS, is_recursive=True
+			convert_syntax, extracted_yaml_details=yaml_details, is_recursive=True
 		)
-		targetcode = convert_syntax(YAML_DETAILS, content) # type: ignore
+		targetcode = convert_syntax(yaml_details, content)
 		with open(argv[2], "w", encoding="utf-8") as OutputFile:
 			OutputFile.write(targetcode)
 		print(Fore.GREEN, "Saved as", argv[2])
