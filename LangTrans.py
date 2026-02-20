@@ -273,7 +273,7 @@ def compile_error_regexes(
 	:type global_variables: _VariablesDict
 
 	:return: The `errors` dictionary with compiled regex patterns.
-	:rtype: _ArbitraryDict
+	:rtype: _ErrorDictionary
 	"""
 	result: _ErrorDictionary = {}
 
@@ -285,8 +285,11 @@ def compile_error_regexes(
 			)
 		else:
 			error_details = cast(_ErrorDetails, error.copy())
+			raw_regex = error.get("regex")
+			if not isinstance(raw_regex, str):
+				raise TypeError(f"Invalid regex for error '{error_name}'")
 			error_details["regex"] = sanitize_regex(
-				replace_variables(global_variables, str(error["regex"]))
+				replace_variables(global_variables, raw_regex)
 			)
 			result[error_name] = error_details
 
