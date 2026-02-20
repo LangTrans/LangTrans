@@ -568,7 +568,7 @@ def match_parts(
 						continue
 					err_match = regex.search(match_string)
 
-					error_message = error["msg"]
+					error_message = error.get("msg")
 					if error_message is None or not isinstance(error_message, str):
 						error_message = ""
 
