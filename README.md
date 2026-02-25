@@ -25,23 +25,24 @@ Use the following command to clone the repository:
 
 ```bash
 git clone https://github.com/LangTrans/LangTrans.git
+cd LangTrans
 ```
 
 After cloning, navigate into the LangTrans directory.
 
 ### **Download executable**
 
-Go to [Releases](https://github.com/LangTrans/LangTrans/releases) and download the [latest executable]((https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe)) or a [installer](https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe).
+Go to [Releases](https://github.com/LangTrans/LangTrans/releases) and download the [latest executable](https://github.com/LangTrans/LangTrans/releases/download/1.6/langtrans.exe) or a [installer](https://github.com/LangTrans/LangTrans/releases/download/1.6/LangTrans_Installer.exe).
 
 ## Usage
 
 You can use LangTrans from the command line using the following structure:
 
 ```bash
-py langtrans.py <SoureFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>
+py langtrans.py <SourceFileName> <OutputFileName> <SyntaxRepr> <PatternRepr>
 ```
 
-* **SoureFileName**: Name of the source code file written with your new syntax
+* **SourceFileName**: Name of the source code file written with your new syntax
 * **OutputFileName**: Name of the source code file you want to generate with the original syntax
 * **SyntaxRepr**: Name of the YAML file for your syntax representation (without .yaml extension)
 * **PatternRepr**: Name of the YAML file for the pattern representation of the original language (without .yaml extension)
@@ -124,11 +125,11 @@ We welcome contributions from everyone. If you're interested in contributing, he
 
 1. **Creating versions for other languages**: If you're proficient in a particular programming language and wish to help [create a version of LangTrans](https://forms.gle/YDEKapaTZmJspyDeA) for it, please feel free to start. We'd greatly appreciate your expertise.
 
-1. **Reporting Bugs**: If you encounter any bugs or issues, please open a new issue describing the bug, how you came across it, and any potential causes or solutions you have in mind.
+2. **Reporting Bugs**: If you encounter any bugs or issues, please open a new issue describing the bug, how you came across it, and any potential causes or solutions you have in mind.
 
-1. **Feature Suggestions**: If you have any ideas for new features or improvements, we'd love to hear them. Please open an issue describing your suggestion in as much detail as possible.
+3. **Feature Suggestions**: If you have any ideas for new features or improvements, we'd love to hear them. Please open an issue describing your suggestion in as much detail as possible.
 
-1. **Code Contributions**: If you'd like to contribute code to fix bugs or add features, please fork and open a pull request. Ensure your code follows any style guidelines and include as much information as possible about your changes.
+4. **Code Contributions**: If you'd like to contribute code to fix bugs or add features, please fork and open a pull request. Ensure your code follows any style guidelines and include as much information as possible about your changes.
 
 Before contributing, please make sure to check the existing issues and pull requests to avoid duplicating efforts. If you're new to open-source contribution and need guidance, don't hesitate to reach out.
 
@@ -138,6 +139,6 @@ If you need support with LangTrans, there are several ways we can assist you:
 
 1. **GitHub Issues**: If you're experiencing a problem with LangTrans or want to suggest improvements or new features, you can open a new issue on our GitHub repository.
 
-1. **Documentation**: You can find a wealth of information about how to use LangTrans, including detailed guides and examples, in our [Gitbook documentation](https://bijinregipanicker.gitbook.io/langtrans/).
+2. **Documentation**: You can find a wealth of information about how to use LangTrans, including detailed guides and examples, in our [Gitbook documentation](https://bijinregipanicker.gitbook.io/langtrans/).
 
-1. **Community**: You can join our [Discord community](https://discord.gg/3nDwppur5S), where you can ask questions, share your ideas, and get help from other LangTrans users.
+3. **Community**: You can join our [Discord community](https://discord.gg/3nDwppur5S), where you can ask questions, share your ideas, and get help from other LangTrans users.
