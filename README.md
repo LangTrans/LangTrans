@@ -26,6 +26,7 @@ Use the following command to clone the repository:
 ```bash
 git clone https://github.com/LangTrans/LangTrans.git
 cd LangTrans
+pip install -r requirements.txt
 ```
 
 After cloning, navigate into the LangTrans directory.
