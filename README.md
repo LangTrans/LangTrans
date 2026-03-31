@@ -11,15 +11,26 @@
 [![License](https://img.shields.io/github/license/B-R-P/langtrans?style=flat-square&logo=open-source-initiative)](https://raw.githubusercontent.com/B-R-P/LangTrans/main/LICENSE)
 [![myPy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
-LangTrans is a syntactic preprocessor that lets you customize any programming language's syntax.<br>
-It translates your custom syntax into the original language, allowing personalized coding while adhering to language specifications.<br>
-Using regular expressions, it extracts tokens from your custom language to generate the original syntax.
+LangTrans is a syntactic preprocessor that allows users to customize the syntax of any programming language.
+It translates custom syntax into the original language, enabling personalized coding while still following standard language rules.
+Using regular expressions, it extracts tokens from custom syntax and converts them into valid code.
 
 ## Quick Start
+### Installation
+### Basic Example
+
+```python
+from langtrans import translate
+
+result = translate("Hello", target="fr")
+print(result)
+
+```bash
+pip install langtrans
 
 There are two ways you can install LangTrans:
 
-### **Clone repository**
+### Clone Repository
 
 Use the following command to clone the repository:
 
