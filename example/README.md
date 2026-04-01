@@ -1,5 +1,13 @@
 # Py_Trans
 
+## Overview
+Py_trans is a tool that converts customized Python syntax into standard Python syntax.
+This allows users to write shorter and cleaner code.
+
+## How it works
+The tool reads custom syntax and converts it into valid Python using predefined rules.
+
+
 Customized python syntax
 
 <table>
