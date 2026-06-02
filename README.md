@@ -14,6 +14,23 @@
 LangTrans is a syntactic preprocessor that lets you customize any programming language's syntax.<br>
 It translates your custom syntax into the original language, allowing personalized coding while adhering to language specifications.<br>
 Using regular expressions, it extracts tokens from your custom language to generate the original syntax.
+### How LangTrans Works
+
+Think of LangTrans as a translator between your custom syntax and the original programming language.
+
+For example, you might prefer writing:
+
+```py
+p"Hello World"
+```
+
+Instead of:
+
+```py
+print("Hello World")
+```
+
+LangTrans converts your custom syntax into valid source code before execution, allowing you to experiment with different language styles while still using the original language runtime.
 
 ## Quick Start
 
